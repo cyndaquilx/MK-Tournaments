@@ -1,0 +1,14 @@
+/notes*
+**/__pycache__*
+/tournaments*
+/.venv*
+/config.json
+/config2.json
+/*.pkl
+/cogs/*
+/commands*
+!/cogs/Registration.py
+!/cogs/Tables.py
+!/cogs/TournamentManager.py
+!/cogs/Results.py
+!/cogs/TeamManagement.py

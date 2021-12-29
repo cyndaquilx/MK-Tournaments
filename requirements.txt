@@ -1,0 +1,4 @@
+aiofiles>=0.7.0
+aiohttp>=3.7.4
+dill>=0.3.3
+discord.py>=1.7.2
