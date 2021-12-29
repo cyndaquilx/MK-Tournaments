@@ -14,7 +14,7 @@ bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents)
 
 initial_extensions = ['cogs.TournamentManager', 'cogs.Tables',
                       'cogs.Registration', 'cogs.Results',
-                      'cogs.TeamManagement']
+                      'cogs.TeamManagement', 'cogs.MKCentral']
 
 with open('./config.json', 'r') as cjson:
     bot.config = json.load(cjson)
