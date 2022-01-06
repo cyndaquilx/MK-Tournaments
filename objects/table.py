@@ -109,7 +109,10 @@ class Table:
         advancingTeams = [t.team for t in sortedTeams][0:numAdvance]
         tieTeams = []
         extraTeams = []
-        tieRank = sortedTeams[numAdvance-1].rank
+        if numAdvance > 0:
+            tieRank = sortedTeams[numAdvance-1].rank
+        else:
+            tieRank = 0
 
         #gets all the teams with a rank of tieRank
         potentialTieTeams = [t for t in sortedTeams if t.rank == tieRank]

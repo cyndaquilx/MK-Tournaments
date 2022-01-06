@@ -452,7 +452,7 @@ class TournamentManager(commands.Cog):
                 await ctx.send(f"The following rooms need to be updated: {missingRooms}")
                 return
             if len(tiebreaks) > 0:
-                missingTies = ", ".join(tiebreaks)
+                missingTies = ", ".join([str(t) for t in tiebreaks])
                 await ctx.send(f"The following tiebreakers need to be resolved: {missingTies}")
                 return
         if tournament.currentRoundNumber() == len(tournament.adv_path):
@@ -933,12 +933,12 @@ class TournamentManager(commands.Cog):
                     if player.mkcID == int(query):
                         results.append(team)
         for team in tournament.teams:
-            if team.tag.lower() == query:
+            if team.tag is not None and team.tag.lower() == query:
                 results.append(team)
             for player in team.players:
-                if player.username.lower() == query:
+                if player.username is not None and player.username.lower() == query:
                     results.append(team)
-                if player.miiName.lower() == query:
+                if player.miiName is not None and player.miiName.lower() == query:
                     results.append(team)
         results = list(set(results))
         e = discord.Embed(title="Search Results")
