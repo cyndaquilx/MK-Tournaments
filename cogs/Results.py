@@ -19,7 +19,7 @@ class Results(commands.Cog):
         if tournament.finished is False:
             await ctx.send("The tournament must be finished to use this command")
             return
-        teams, placements = self.getPlacements(tournament)
+        teams, placements = tournament.getPlacements()
         msg = "```"
         for i in range(len(teams)):
             msg += f"{str(teams[i])} {placements[i]}\n"

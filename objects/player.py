@@ -27,7 +27,7 @@ class Player:
         self.canHost = not self.canHost
 
     def tableName(self):
-        if self.miiName is not None:
+        if self.miiName is not None and self.miiName != "":
             name = self.miiName
         #if self.username is not None:
         else:
