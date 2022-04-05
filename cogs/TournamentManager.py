@@ -130,7 +130,7 @@ class TournamentManager(commands.Cog):
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
-        if role.id in self.organizer_roles:
+        if role.id in tournament.organizer_roles:
             await ctx.send("This role already has organizer privileges")
             return
         tournament.organizer_roles.append(role.id)
