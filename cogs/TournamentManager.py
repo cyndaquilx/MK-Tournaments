@@ -130,7 +130,7 @@ class TournamentManager(commands.Cog):
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
-        if role.id in self.organizer_roles:
+        if role.id in tournament.organizer_roles:
             await ctx.send("This role already has organizer privileges")
             return
         tournament.organizer_roles.append(role.id)
@@ -246,7 +246,7 @@ class TournamentManager(commands.Cog):
                 return True
         await ctx.send("Would you like to guarantee hosts a place in Round 1? (yes/no)")
         try:
-            response = await ctx.bot.wait_for(event='message', check=yes_no_check, timeout=60.0)
+            response = await ctx.bot.wait_for('message', check=yes_no_check, timeout=60.0)
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Use `!r1config` to restart")
             return False
@@ -263,7 +263,7 @@ class TournamentManager(commands.Cog):
         roomsMsg = await ctx.send(embed=roomsEmbed)
         
         try:
-            response = await ctx.bot.wait_for(event='message', check=yes_no_check, timeout=60.0)
+            response = await ctx.bot.wait_for('message', check=yes_no_check, timeout=60.0)
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Use `!r1config` to restart")
             return False
@@ -296,7 +296,7 @@ class TournamentManager(commands.Cog):
                 if int(m.content) >= minRooms and int(m.content) <= maxRooms:
                     return True
         try:
-            resp = await ctx.bot.wait_for(event='message', check=roomCheck, timeout=60.0)
+            resp = await ctx.bot.wait_for('message', check=roomCheck, timeout=60.0)
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Use `!advConfig` to restart")
             return False
@@ -1001,5 +1001,5 @@ class TournamentManager(commands.Cog):
                 message = await channel.send(messageText)
                 currRound.progress_msgs.append(message.id)
 
-def setup(bot):
-    bot.add_cog(TournamentManager(bot))
+async def setup(bot):
+    await bot.add_cog(TournamentManager(bot))

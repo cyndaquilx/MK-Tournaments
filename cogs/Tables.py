@@ -73,7 +73,7 @@ class Tables(commands.Cog):
                     imgData = io.BytesIO(await resp.read())
                     f = discord.File(imgData, filename="MogiTable.png")
         
-        e = discord.Embed(title="Table", inline=False)
+        e = discord.Embed(title="Table")
         e.add_field(name="Round", value=f"Round {room.roundNum}")
         e.add_field(name="Room", value=f"Room {room.roomNum}")
         adv, tie, extra = room.checkAdvanced(tournament, players, scores)
@@ -312,5 +312,5 @@ class Tables(commands.Cog):
 ##            t_round = 
         
 
-def setup(bot):
-    bot.add_cog(Tables(bot))
+async def setup(bot):
+    await bot.add_cog(Tables(bot))

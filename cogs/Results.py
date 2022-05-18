@@ -56,5 +56,5 @@ class Results(commands.Cog):
         f = discord.File(StringIO(txt), filename="TournamentData.txt")
         await ctx.send(file=f)
         
-def setup(bot):
-    bot.add_cog(Results(bot))
+async def setup(bot):
+    await bot.add_cog(Results(bot))

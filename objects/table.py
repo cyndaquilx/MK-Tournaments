@@ -13,6 +13,15 @@ class Table:
     def update(self, players, scores):
         for i in range(len(players)):
             self.playerScores[players[i]] = scores[i]
+        for team in self.teams:
+            score = 0
+            for player in team:
+                if self.playerScores[player] is not None:
+                    score += self.playerScores[player]
+            if len(team.roundScores) < self.roundNum:
+                team.roundScores.append(score)
+            else:
+                team.roundScores[self.roundNum-1] = score
 
     def getTeamScores(self, playerScores=None):
         if playerScores is None:
@@ -102,7 +111,7 @@ class Table:
         sortableTeams = []
         for team in self.teams:
             s = SortableTeam(team, tournamentTeams, playerScores, self.getRank(team, playerScores),
-                             hostRule, mostPtsRule, registrationRule)
+                             self.roundNum, hostRule, mostPtsRule, registrationRule)
             sortableTeams.append(s)
         #sortedTeams = [x for _, x in sorted(zip(teamScores, sortableTeams), reverse=True)]
         sortedTeams = sorted(sortableTeams, reverse=True)
@@ -137,18 +146,20 @@ class Table:
 
     def getSortableTeams(self, tournament):
         sortableTeams = []
+        lastRoundTeams = []
         for team in self.teams:
             rank = self.getRank(team, self.playerScores)
-            s = SortableTeam(team, tournament.teams, self.playerScores, rank)
+            s = SortableTeam(team, tournament.teams, self.playerScores, rank, self.roundNum)
             sortableTeams.append(s)
         return sortableTeams
             
 class SortableTeam:
-    def __init__ (self, team, tournamentTeams, playerScores, rank, hostRule=True, mostPtsRule=True, registrationRule=True):
+    def __init__ (self, team, tournamentTeams, playerScores, rank, roundNum, hostRule=True, mostPtsRule=True, registrationRule=True):
         self.team = team
         self.tournamentTeams = tournamentTeams
         self.playerScores = playerScores
         self.rank = rank
+        self.roundNum = roundNum
         self.hostRule = hostRule
         self.mostPtsRule = mostPtsRule
         self.registrationRule = registrationRule
@@ -202,6 +213,17 @@ class SortableTeam:
             if max2 < max1:
                 #print(f"team {str(self.team)} wins tiebreak due to indivs rule")
                 return False
+
+        #checking new last round rule
+        #(team that scored higher last round advances)
+        if self.roundNum > 1:
+            t1_last_round = self.team.roundScores[self.roundNum-2]
+            t2_last_round = other.team.roundScores[self.roundNum-2]
+            if t1_last_round < t2_last_round:
+                return True
+            if t1_last_round > t2_last_round:
+                return False
+            
         #checking registration rule
         #(team that registered first advances)
         if self.registrationRule is True:

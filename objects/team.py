@@ -8,6 +8,7 @@ class Team:
         self.currSeed = seed
         self.mkcID = mkcID
         self.mkcHost = mkcHost
+        self.roundScores = []
 
     def __str__ (self):
         return ", ".join(str(player) for player in self.players)

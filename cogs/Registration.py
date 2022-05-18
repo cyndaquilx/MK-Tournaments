@@ -295,7 +295,7 @@ class Registration(commands.Cog):
         if tournament.required_miiName is True:
             await self.queue(ctx, f"{ctx.author.mention} what is your in-game nickname/Mii Name for this tournament?")
             try:
-                msg = await ctx.bot.wait_for(event='message', check=check, timeout=60.0)
+                msg = await ctx.bot.wait_for('message', check=check, timeout=60.0)
             except asyncio.TimeoutError:
                 await self.queue(ctx, f"{ctx.author.mention} timed out, try again")
                 return False
@@ -311,7 +311,7 @@ class Registration(commands.Cog):
         if tournament.required_fc is True:
             await self.queue(ctx, f"{ctx.author.mention} what is your FC? (format: 0000-0000-0000)")
             try:
-                msg = await ctx.bot.wait_for(event='message', check=check, timeout=60.0)
+                msg = await ctx.bot.wait_for('message', check=check, timeout=60.0)
             except asyncio.TimeoutError:
                 await self.queue(ctx, f"{ctx.author.mention} timed out, try again")
                 return False
@@ -331,7 +331,7 @@ class Registration(commands.Cog):
                 if m.content.lower() == "yes" or m.content.lower() == "no":
                     return True
             try:
-                msg = await ctx.bot.wait_for(event='message', check=yes_no_check, timeout=60.0)
+                msg = await ctx.bot.wait_for('message', check=yes_no_check, timeout=60.0)
             except asyncio.TimeoutError:
                 await self.queue(ctx, f"{ctx.author.mention} timed out, try again")
                 return False
@@ -418,5 +418,5 @@ class Registration(commands.Cog):
         if len(send) > 0:
             await self.queue(send)
 
-def setup(bot):
-    bot.add_cog(Registration(bot))
+async def setup(bot):
+    await bot.add_cog(Registration(bot))

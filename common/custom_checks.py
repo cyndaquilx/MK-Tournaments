@@ -53,7 +53,7 @@ async def basic_check(ctx):
         if m.author.id != ctx.author.id or m.channel.id != ctx.channel.id:
             return False
         return True
-    resp = await ctx.bot.wait_for(event='message', check=check, timeout=60.0)
+    resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
 async def yes_no_check(ctx):
@@ -62,7 +62,7 @@ async def yes_no_check(ctx):
             return False
         if m.content.lower() == "yes" or m.content.lower() == "no":
             return True
-    resp = await ctx.bot.wait_for(event='message', check=check, timeout=60.0)
+    resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
 async def num_exit_check(ctx):
@@ -73,7 +73,7 @@ async def num_exit_check(ctx):
             return True
         if m.content.isdigit():
             return True
-    resp = await ctx.bot.wait_for(event='message', check=check, timeout=60.0)
+    resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
 async def optionCheck(ctx):
@@ -84,7 +84,7 @@ async def optionCheck(ctx):
             return True
         if m.content.isdigit():
             return True
-    resp = await ctx.bot.wait_for(event='message', check=check, timeout=60.0)
+    resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
 async def number_check(ctx):
@@ -93,6 +93,6 @@ async def number_check(ctx):
             return False
         if m.content.isdigit():
             return True
-    resp = await ctx.bot.wait_for(event='message', check=check, timeout=60.0)
+    resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
