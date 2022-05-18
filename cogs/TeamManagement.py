@@ -176,5 +176,5 @@ class TeamManagement(commands.Cog):
         player.fc = resp.content
         await ctx.send(f"Successfully changed {str(player)}'s FC to {resp.content}")
 
-def setup(bot):
-    bot.add_cog(TeamManagement(bot))
+async def setup(bot):
+    await bot.add_cog(TeamManagement(bot))

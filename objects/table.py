@@ -21,7 +21,7 @@ class Table:
             if len(team.roundScores) < self.roundNum:
                 team.roundScores.append(score)
             else:
-                team.roundScores[roundNum-1] = score
+                team.roundScores[self.roundNum-1] = score
 
     def getTeamScores(self, playerScores=None):
         if playerScores is None:
@@ -149,7 +149,7 @@ class Table:
         lastRoundTeams = []
         for team in self.teams:
             rank = self.getRank(team, self.playerScores)
-            s = SortableTeam(team, tournament.teams, self.playerScores, rank, self.RoundNum)
+            s = SortableTeam(team, tournament.teams, self.playerScores, rank, self.roundNum)
             sortableTeams.append(s)
         return sortableTeams
             

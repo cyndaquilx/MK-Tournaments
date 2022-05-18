@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import json
 import logging
 import aiofiles
+import asyncio
 
 import dill as pickle
 from os import path
@@ -10,6 +11,7 @@ from os import path
 logging.basicConfig(level=logging.INFO)
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents)
 
 initial_extensions = ['cogs.TournamentManager', 'cogs.Tables',
@@ -32,7 +34,7 @@ async def backup_tournament_data():
         return
     async with aiofiles.open('tournament_data.pkl', 'wb') as backupFile:
         await backupFile.write(pickle.dumps(bot.tournaments, pickle.HIGHEST_PROTOCOL))
-backup_tournament_data.start()
+#backup_tournament_data.start()
     
 @bot.event
 async def on_command_error(ctx, error):
@@ -67,13 +69,21 @@ async def on_command_error(ctx, error):
         return
     raise error
 
-if __name__ == '__main__':
-    for extension in initial_extensions:
-        bot.load_extension(extension)
+##if __name__ == '__main__':
+##    for extension in initial_extensions:
+##        bot.load_extension(extension)
 
 @bot.event
 async def on_ready():
     print("Logged in as {0.user}".format(bot))
     
-bot.run(bot.config["token"])
+##bot.run(bot.config["token"])
 
+async def main():
+    async with bot:
+        for extension in initial_extensions:
+            await bot.load_extension(extension)
+        backup_tournament_data.start()
+        await bot.start(bot.config["token"])
+
+asyncio.run(main())
