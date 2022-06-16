@@ -65,7 +65,7 @@ async def on_command_error(ctx, error):
         await(await ctx.send("You can't use this command in DMs!")).delete(delay=5)
         return
     if isinstance(error, commands.MissingPermissions):
-        await(await ctx.send(f"You need the following permissions to use this command: {', '.join(error.missing_perms)}")).delete(delay=10)
+        await(await ctx.send(f"You need the following permissions to use this command: {', '.join(error.missing_permissions)}")).delete(delay=10)
         return
     raise error
 
