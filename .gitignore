@@ -12,3 +12,4 @@
 !/cogs/TournamentManager.py
 !/cogs/Results.py
 !/cogs/TeamManagement.py
+/organizerbot_admin.py
