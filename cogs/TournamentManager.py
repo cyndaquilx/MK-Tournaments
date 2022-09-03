@@ -989,17 +989,20 @@ class TournamentManager(commands.Cog):
                     continue
             for msgid in invalidMsgs:
                 currRound.progress_msgs.remove(msgid)
-            for i, msg in enumerate(discordMsgs):
-                if len(msgs) > 0:
-                    messageText = msgs.pop(0)
-                    if msg.content == messageText:
-                        continue
-                    await msg.edit(content=messageText)
-                else:
-                    await msg.delete()
-            for messageText in msgs:
-                message = await channel.send(messageText)
-                currRound.progress_msgs.append(message.id)
+            try:
+                for i, msg in enumerate(discordMsgs):
+                    if len(msgs) > 0:
+                        messageText = msgs.pop(0)
+                        if msg.content == messageText:
+                            continue
+                        await msg.edit(content=messageText)
+                    else:
+                        await msg.delete()
+                for messageText in msgs:
+                    message = await channel.send(messageText)
+                    currRound.progress_msgs.append(message.id)
+            except Exception as e:
+                pass
 
 async def setup(bot):
     await bot.add_cog(TournamentManager(bot))
