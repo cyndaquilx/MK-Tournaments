@@ -832,6 +832,47 @@ class TournamentManager(commands.Cog):
             msg += "```"
             await ctx.send(msg)
 
+    @commands.command(aliases=['rr'])
+    async def roundRanking(self, ctx, roundNum=0):
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if roundNum == 0:
+            currRound = tournament.currentRound()
+            roundNum = tournament.currentRoundNumber()
+        else:
+            currRound = tournament.rounds[roundNum-1]
+        extra = tournament.adv_path[roundNum-1].topscorers
+        adv, scores = currRound.getAdvanced(extra)
+        sortable_teams = []
+        for room in currRound.rooms:
+            sortable_teams.extend(room.table.getSortableTeams(tournament))
+        adv_sortable = [t for t in sortable_teams if t.team in adv]
+        elim_sortable = [t for t in sortable_teams if t not in adv_sortable]
+
+        adv_sortable.sort(reverse=True)
+        elim_sortable.sort(reverse=True)
+        msg = f"```Round {currRound.roundNum} team ranking\n"
+        msg += f"TID  | Rank | Score | Players \n"
+        for t in adv_sortable:
+            t_score = sum([t.playerScores[p] for p in t.team])
+            msg += f"{tournament.teams.index(t.team)+1:<4} | {t.rank:<4} | {t_score:<5} | {t.team.tableName()}\n"
+            if len(msg) > 1500:
+                msg += "```"
+                await ctx.send(msg)
+                msg = "```"
+        msg += "--------\n"
+        for t in elim_sortable:
+            t_score = sum([t.playerScores[p] for p in t.team])
+            msg += f"{tournament.teams.index(t.team)+1:<4} | {t.rank:<4} | {t_score:<5} | {t.team.tableName()}\n"
+            if len(msg) > 1500:
+                msg += "```"
+                await ctx.send(msg)
+                msg = "```"
+        if len(msg) > 3:
+            msg += "```"
+            await ctx.send(msg)
+
     @commands.command()
     async def progressChannel(self, ctx, channel:discord.TextChannel):
         if ctx.guild.id not in ctx.bot.tournaments:
