@@ -286,7 +286,8 @@ class TournamentManager(commands.Cog):
         teamsPerRoom = int(tournament.playersPerRoom/tournament.size)
         
         minRooms = math.ceil(1 / teamsPerRoom * rooms)
-        maxRooms = math.floor((teamsPerRoom - 1) / teamsPerRoom * rooms)
+        #maxRooms = math.floor((teamsPerRoom - 1) / teamsPerRoom * rooms)
+        maxRooms = math.floor((teamsPerRoom) / teamsPerRoom * rooms)
         await ctx.send(f"Please enter the number of rooms you want (min: {minRooms}, max: {maxRooms})")
         
         def roomCheck(m: discord.Message):
