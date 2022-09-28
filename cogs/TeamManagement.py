@@ -176,5 +176,22 @@ class TeamManagement(commands.Cog):
         player.fc = resp.content
         await ctx.send(f"Successfully changed {str(player)}'s FC to {resp.content}")
 
+    @commands.command(aliases=['r'])
+    async def remove(self, ctx, id:int):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if id > len(tournament.teams):
+            await ctx.send(f"There are only {len(tournament.teams)} teams in this tournamnet.")
+            return
+        team = tournament.teams[id-1]
+        if team is not None:
+            tournament.teams.remove(team)
+            await ctx.send(ctx, f"Removed {str(team)} from the tournament")
+            return
+
+
 async def setup(bot):
     await bot.add_cog(TeamManagement(bot))
