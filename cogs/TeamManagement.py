@@ -189,7 +189,7 @@ class TeamManagement(commands.Cog):
         team = tournament.teams[id-1]
         if team is not None:
             tournament.teams.remove(team)
-            await ctx.send(ctx, f"Removed {str(team)} from the tournament")
+            await ctx.send(f"Removed {str(team)} from the tournament")
             return
 
 
