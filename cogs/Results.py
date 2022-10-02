@@ -9,7 +9,7 @@ class Results(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def placements(self, ctx):
+    async def placements(self, ctx, arg=""):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
@@ -22,7 +22,11 @@ class Results(commands.Cog):
         teams, placements = tournament.getPlacements()
         msg = "```"
         for i in range(len(teams)):
-            msg += f"{str(teams[i])} {placements[i]}\n"
+            if arg == "fc":
+                team = " ".join(p.fc for p in teams[i].players)
+            else:
+                team = str(teams[i])
+            msg += f"{team} {placements[i]}\n"
             #msg += f"{teams[i].mkcID} {placements[i]}\n"
             if len(msg) > 1500:
                 msg += "```"
