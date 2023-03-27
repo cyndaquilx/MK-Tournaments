@@ -234,7 +234,8 @@ class TournamentManager(commands.Cog):
         if tournament.started is False:
             await ctx.send("The tournament must be started to use this command; use `!start`")
             return False
-        numTeams = tournament.numTeams()
+        #numTeams = tournament.numTeams()
+        numTeams = len(tournament.get_unfloated_teams())
         size = tournament.size
         players = tournament.playersPerRoom
         rooms = int(numTeams / (players/size))
@@ -348,12 +349,18 @@ class TournamentManager(commands.Cog):
         path = []
             
         while rooms > 1:
-            nxt = tournament.calcAdvancements(rooms)
+            extra = 0
+            if len(tournament.floated_teams) > roundNum:
+                extra = len(tournament.floated_teams[roundNum])
+            nxt = tournament.calcAdvancements(rooms, extra)
             advEmbed = discord.Embed(title=f"Round {roundNum} advancements ({rooms} rooms)")
             optionStr = ""
             i = 1
             for adv in nxt:
-                optionStr += f"**{i})** Top {adv.adv} + {adv.topscorers} -> {adv.newRooms} rooms\n"
+                advance_str = f"**{i})** Top {adv.adv} + {adv.topscorers}"
+                if extra > 0:
+                    advance_str += f" (+{extra} floated)"
+                optionStr += f"{advance_str} -> {adv.newRooms} rooms\n"
                 i += 1
             optionStr += f"**{i})** Custom\n"
             optionStr += "type `back` to go back, type `exit` to exit"
@@ -484,6 +491,7 @@ class TournamentManager(commands.Cog):
                            + "Use `!deleterooms` if you really need to delete the rooms.")
             return
         tournament.rounds.remove(currentRound)
+        await ctx.send("Moved to previous round")
 
     @commands.command(aliases=['mr'])
     async def makeRooms(self, ctx):

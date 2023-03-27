@@ -13,4 +13,5 @@
 !/cogs/Results.py
 !/cogs/TeamManagement.py
 !/cogs/mkc_tournaments.py
+!/cogs/lounge.py
 /organizerbot_admin.py

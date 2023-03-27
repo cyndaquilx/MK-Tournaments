@@ -1,6 +1,7 @@
 from algorithms import advanceAlg
 from .round import Round
 from .team import Team
+from .player import Player
 
 class Tournament:
     def __init__(self, size:int, name, game, organizerRoles, hostRoles):
@@ -16,6 +17,7 @@ class Tournament:
         self.finished = False
         self.teams = []
         self.pending_teams = []
+        self.floated_teams = []
 
         self.organizer_roles = organizerRoles
         self.host_roles = hostRoles
@@ -89,19 +91,23 @@ class Tournament:
             num = self.currentRoundNumber()
         return ordinal(self.adv_path[num-1].adv + 1)
 
-    def getHostTeams(self):
+    def getHostTeams(self, teams=None):
         hosts = []
-        for team in self.teams:
+        if teams is None:
+            teams = self.teams
+        for team in teams:
             if team.hasHost():
                 hosts.append(team)
         return hosts
 
-    def getNonHostTeams(self):
-        teams = []
-        for team in self.teams:
+    def getNonHostTeams(self, teams=None):
+        no_hosts = []
+        if teams is None:
+            teams = self.teams
+        for team in teams:
             if team.hasHost() is False:
-                teams.append(team)
-        return teams
+                no_hosts.append(team)
+        return no_hosts
 
     def numTeams(self):
         return len(self.teams)
@@ -183,19 +189,37 @@ class Tournament:
     def addUnregisteredSquad(self, squad):
         self.pending_teams.append(squad)
 
+    def get_unfloated_teams(self):
+        teams = []
+        for team in self.teams:
+            #print(team)
+            is_floated = False
+            for round in self.floated_teams:
+                #print(", ".join([str(team) for team in round]))
+                if team in round:
+                    is_floated = True
+            if is_floated:
+                continue
+            teams.append(team)
+        return teams
+
     def getR1Teams(self):
+        teams = self.get_unfloated_teams()
         if self.prioritizeHosts is False:
             return self.teams[0:self.cap]
-        orderedTeams = self.getHostTeams() + self.getNonHostTeams()
+        orderedTeams = self.getHostTeams(teams) + self.getNonHostTeams(teams)
         return orderedTeams[0:self.cap]
 
     def nextRound(self, races:int):
         if len(self.rounds) == 0:
             #teams = self.teams[0:self.cap]
             teams = self.getR1Teams()
+            #print(len(teams))
         else:
             extra = self.adv_path[self.currentRoundNumber()-1].topscorers
             teams, scores = self.currentRound().getAdvanced(extra)
+            if len(self.floated_teams) >= self.currentRoundNumber()+1:
+                teams += self.floated_teams[self.currentRoundNumber()]
         newRound = Round(teams, self.currentRoundNumber()+1, races)
         self.rounds.append(newRound)
         return newRound
@@ -205,8 +229,8 @@ class Tournament:
         del self.adv_path[currIndex:]
         self.adv_path.extend(newPath)
 
-    def calcAdvancements(self, num:int):
-        return advanceAlg.nextRoomNumbers(num, self.size, self.playersPerRoom)
+    def calcAdvancements(self, num:int, extra:int):
+        return advanceAlg.nextRoomNumbers(num, self.size, self.playersPerRoom, extra)
 
     def createCustomAdvancement(self, oldRooms:int, newRooms:int, adv:int, topscorers:int):
         return advanceAlg.Advancement(oldRooms, newRooms, adv, topscorers)
@@ -231,3 +255,12 @@ class Tournament:
             teams.extend([s.team for s in sortableTeams])
             placements.extend([p + len(placements) for p in roundPlacements])
         return teams, placements
+
+    # def r1teams(self):
+    #     teams = []
+    #     for team in self.teams:
+    #         for round in self.floated_teams:
+    #             if team in round:
+    #                 continue
+    #         teams.append(team)
+    #     return teams

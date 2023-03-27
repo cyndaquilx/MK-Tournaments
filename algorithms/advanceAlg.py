@@ -73,7 +73,7 @@ def goodWithHighScores(num:int, size:int, playersPerRoom=12):
             return True
     return False
 
-def nextGoodRooms(num:int, size:int, playersPerRoom=12):
+def nextGoodRooms(num:int, size:int, playersPerRoom=12, extra=0):
     advancements = []
     if num == 1:
         return advancements
@@ -82,21 +82,21 @@ def nextGoodRooms(num:int, size:int, playersPerRoom=12):
     change = 1
     if size == 1:
         change += 1
-    numNext = num * adv / teams
+    numNext = (num * adv + extra) / teams
     if numNext.is_integer():
         if isGoodNumber(int(numNext), size, playersPerRoom):
             #return int(numNext)
             advancements.append(Advancement(num, int(numNext), adv, 0))
     if adv + change < teams:
-        numNext = num * (adv+change) / teams
+        numNext = (num * (adv+change) + extra) / teams
         if numNext.is_integer() and isGoodNumber(int(numNext), size, playersPerRoom):
             advancements.append(Advancement(num, int(numNext), adv+change, 0))
-    numNext = num * (adv-change) / teams
+    numNext = (num * (adv-change) + extra) / teams
     if numNext.is_integer() and isGoodNumber(int(numNext), size, playersPerRoom):
         advancements.append(Advancement(num, int(numNext), adv-change, 0))
     return advancements
 
-def nextDecentRooms(num:int, size:int, playersPerRoom=12):
+def nextDecentRooms(num:int, size:int, playersPerRoom=12, extra=0):
     advancements = []
     teams = playersPerRoom/size
     adv = math.ceil(teams * 1 / 2)
@@ -111,18 +111,18 @@ def nextDecentRooms(num:int, size:int, playersPerRoom=12):
         if len(roomsNext) > 0:
             advancements.append(Advancement(num, int(numNext), adv, 0))
      
-    numNext = num * adv / teams
+    numNext = (num * adv + extra) / teams
     if numNext.is_integer():
         calcAdvances(numNext, adv)
-    numNext = num * (adv+change) / teams
+    numNext = (num * (adv+change) + extra) / teams
     if numNext.is_integer():
         calcAdvances(numNext, adv)
-    numNext = num * (adv-change) / teams
+    numNext = (num * (adv-change) + extra) / teams
     if numNext.is_integer():
         calcAdvances(numNext, adv)
     return advancements
     
-def nextAnyRooms(num:int, size:int, playersPerRoom=12):
+def nextAnyRooms(num:int, size:int, playersPerRoom=12, extra=0):
     advancements = []
     teams = playersPerRoom/size
     adv = math.ceil(teams * 1 / 2)
@@ -130,20 +130,20 @@ def nextAnyRooms(num:int, size:int, playersPerRoom=12):
     if size == 1:
         change += 1
 
-    numNext = num * adv / teams
+    numNext = (num * adv + extra) / teams
     if numNext.is_integer():
         advancements.append(Advancement(num, int(numNext), adv, 0))
     if adv + change < teams:
-        numNext = num * (adv+change) / teams
+        numNext = (num * (adv+change) + extra) / teams
         if numNext.is_integer():
             advancements.append(Advancement(num, int(numNext), adv+change, 0))
     if adv - change > 0:
-        numNext = num * (adv - change) / teams
+        numNext = (num * (adv - change) + extra) / teams
         if numNext.is_integer():
             advancements.append(Advancement(num, int(numNext), adv-change, 0))
     return advancements
 
-def nextHighScoreDecentRooms(num:int, size:int, playersPerRoom=12):
+def nextHighScoreDecentRooms(num:int, size:int, playersPerRoom=12, extra=0):
     advancements = []
     teamsPerRoom = playersPerRoom/size
     adv = math.ceil(teamsPerRoom * 1 / 2)
@@ -151,20 +151,20 @@ def nextHighScoreDecentRooms(num:int, size:int, playersPerRoom=12):
     if size == 1:
         change += 1
     if adv - change > 0:
-        minTeams = (adv - change) * num
+        minTeams = (adv - change) * num + extra
     else:
-        minTeams = adv * num
+        minTeams = adv * num + extra
     if adv + change < teamsPerRoom:
-        maxTeams = (adv + change) * num
+        maxTeams = (adv + change) * num + extra
     else:
-        maxTeams = adv * num
+        maxTeams = adv * num + extra
 
     #room = math.ceil(minTeams / teams)
     teams = math.ceil(minTeams / teamsPerRoom) * teamsPerRoom
     while teams <= maxTeams:
         rooms = int(teams/teamsPerRoom)
-        numAdvancing = int(teams/num)
-        numExtra = int(teams % num)
+        numAdvancing = int((teams-extra)/num)
+        numExtra = int((teams-extra) % num)
         #if len(nextDecentRooms(rooms, size)) > 0 or len(nextGoodRooms(rooms, size)) > 0:
         if (len(nextDecentRooms(rooms, size, playersPerRoom)) > 0
             or isGoodNumber(rooms, size, playersPerRoom)):
@@ -172,36 +172,42 @@ def nextHighScoreDecentRooms(num:int, size:int, playersPerRoom=12):
         teams += teamsPerRoom
     return advancements
             
-def nextHighScoreAnyRoom(num:int, size:int, playersPerRoom=12):
+def nextHighScoreAnyRoom(num:int, size:int, playersPerRoom=12, extra=0):
     advancements = []
     teamsPerRoom = playersPerRoom/size
     change = 1
     if size == 1:
         change += 1
-    rooms = math.ceil(1 / 2 * num)
-    numAdvancing = int(rooms * teamsPerRoom / num)
-    numExtra = int((rooms * teamsPerRoom) % num)
+    #rooms = math.ceil(1 / 2 * num)
+    rooms = math.ceil((1 / 2 * num * teamsPerRoom + extra) / teamsPerRoom)
+    numAdvancing = int((rooms * teamsPerRoom - extra) / num)
+    numExtra = int((rooms * teamsPerRoom - extra) % num)
     advancements.append(Advancement(num, rooms, numAdvancing, numExtra))
     return advancements
 
-def nextRoomNumbers(num:int, size:int, playersPerRoom=12):
+def nextRoomNumbers(num:int, size:int, playersPerRoom=12, extra=0):
     advancements = []
     if num == 1:
         return advancements
     
-    advancements.extend(nextGoodRooms(num, size, playersPerRoom))
-    temp = nextDecentRooms(num, size, playersPerRoom)
+    advancements.extend(nextGoodRooms(num, size, playersPerRoom, extra))
+    #print(len(advancements))
+    temp = nextDecentRooms(num, size, playersPerRoom, extra)
     advancements.extend([x for x in temp if x not in advancements])
-    temp = nextAnyRooms(num, size, playersPerRoom)
+    #print(len(advancements))
+    temp = nextAnyRooms(num, size, playersPerRoom, extra)
     advancements.extend([x for x in temp if x not in advancements])
+    #print(len(advancements))
     if len(advancements) > 2:
         return advancements
-    temp = nextHighScoreDecentRooms(num, size, playersPerRoom)
+    temp = nextHighScoreDecentRooms(num, size, playersPerRoom, extra)
     advancements.extend([x for x in temp if x not in advancements])
+    #print(len(advancements))
     if len(advancements) > 2:
         return advancements
-    temp = nextHighScoreAnyRoom(num, size, playersPerRoom)
+    temp = nextHighScoreAnyRoom(num, size, playersPerRoom, extra)
     advancements.extend([x for x in temp if x not in advancements])
+    #print(len(advancements))
     return advancements
         
 

@@ -11,6 +11,7 @@ class Player:
         self.mkcID = mkcID
         self.confirmed = confirmed
         self.country = country
+        self.mmr = 0
 
     def __str__ (self):
         if self.username is not None:

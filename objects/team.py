@@ -104,3 +104,16 @@ class Team:
                 player_details += f"\t`MKC ID:` {player.mkcID}\n"
             details += f"{player_details}\n"
         return details
+    
+    def avg_mmr(self):
+        mmr_sum = 0
+        for player in self.players:
+            mmr_sum += player.mmr
+        return mmr_sum/len(self.players)
+    
+    def top_mmr(self):
+        max = 0
+        for player in self.players:
+            if player.mmr > max:
+                max = player.mmr
+        return max

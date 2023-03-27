@@ -40,6 +40,8 @@ class Round:
         return adv, scores
 
     def reseed(self, tournament):
+        for team in self.teams:
+            team.currSeed = 0 # makes floated teams highest seeds, since 0 is higher than all sortableteams seeds
         lastRound = tournament.lastRound()
         if lastRound is None:
             return
