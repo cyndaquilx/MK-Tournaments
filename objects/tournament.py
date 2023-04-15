@@ -219,7 +219,12 @@ class Tournament:
             extra = self.adv_path[self.currentRoundNumber()-1].topscorers
             teams, scores = self.currentRound().getAdvanced(extra)
             if len(self.floated_teams) >= self.currentRoundNumber()+1:
-                teams += self.floated_teams[self.currentRoundNumber()]
+                round_floated_teams = self.floated_teams[self.currentRoundNumber()]
+                # need to add scores of 0 for previous rounds for teams that were floated
+                for team in round_floated_teams:
+                    for i in range(self.currentRoundNumber()):
+                        team.roundScores.append(0)
+                teams += round_floated_teams
         newRound = Round(teams, self.currentRoundNumber()+1, races)
         self.rounds.append(newRound)
         return newRound
