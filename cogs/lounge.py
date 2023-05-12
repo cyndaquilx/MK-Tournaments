@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import aiohttp, asyncio
-from common import has_organizer_role, yes_no_check
+from common import has_organizer_role, yes_no_check, number_check
 from objects import Tournament
 
 class lounge(commands.Cog):
@@ -22,6 +22,7 @@ class lounge(commands.Cog):
         headers = {'Content-type': 'application/json'}
         progress = await ctx.send("Working...")
         async with aiohttp.ClientSession() as session:
+            not_found = []
             for i, team in enumerate(tournament.teams):
                 for player in team.players:
                     await asyncio.sleep(0.05)
@@ -30,15 +31,56 @@ class lounge(commands.Cog):
                     async with session.get(request_url,headers=headers) as resp:
                         if resp.status != 200:
                             player.mmr = 0
+                            not_found.append(player)
                             continue
                         player_data = await resp.json()
                         if 'maxMmr' not in player_data.keys():
                             player.mmr = 0
+                            #not_found.append(player)
                             continue
                         player.mmr = player_data['maxMmr']
                 if i > 0 and i % 10 == 0:
                     await progress.edit(f"Working... ({i}/{len(tournament.teams)})")
-        await ctx.send("done")
+        not_found_msg = "\n".join([f"{str(player)} - {player.miiName}" for player in not_found])
+        await ctx.send(f"done\nMMR for these players was not found:\n{not_found_msg}")
+
+    @commands.command()
+    async def editmmr(self, ctx, teamid:int):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if teamid < 1:
+            await ctx.send("Please enter a number greater than 0")
+            return
+        if teamid > len(tournament.teams):
+            await ctx.send(f"Please enter a number inside the range of the number of teams registered {len(tournament.teams)}")
+            return
+        team = tournament.teams[teamid-1]
+        playersMsg = "Which player do you want to change?\n"
+        for i, player in enumerate(team.players):
+            playersMsg += f"`{i+1})` {str(player)} - {player.miiName} - {player.mmr} MMR\n"
+        await ctx.send(playersMsg)
+        try:
+            resp = await number_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled MMR change")
+            return
+        choice = int(resp.content)
+        if choice < 1 or choice > len(team.players):
+            await ctx.send("Invalid player ID; try using this command again")
+            return
+        player = team.players[choice-1]
+        await ctx.send("What would you like to change their MMR to?")
+        try:
+            resp = await number_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled MMR change")
+            return
+        player.mmr = int(resp.content)
+        await ctx.send(f"Successfully changed {str(player)}'s MMR to {resp.content}")
 
     @commands.command()
     async def printmmrs(self, ctx):
