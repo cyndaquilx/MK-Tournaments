@@ -305,13 +305,14 @@ class TournamentManager(commands.Cog):
         newRooms = int(resp.content)
         numAdvancing = int(newRooms * (teamsPerRoom / rooms))
         if extra > 0:
-            numAdvancing -= (teamsPerRoom / extra)
+            numAdvancing = int(numAdvancing - (teamsPerRoom / extra))
         numExtra = int((newRooms * teamsPerRoom - extra) % rooms)
         confirmEmbed = discord.Embed(title="Confirmation",
                                      description="Please confirm that these settings are correct (yes/no)")
         confirmEmbed.add_field(name=f"Round {roundNum} rooms", value=rooms)
         confirmEmbed.add_field(name="Teams advancing", value=f"{numAdvancing}/{teamsPerRoom}", inline=False)
         if numExtra > 0:
+            #print(numAdvancing)
             confirmEmbed.add_field(name=f"{common.getNthPlace(numAdvancing+1)} place teams", value=numExtra)
         if extra > 0:
             confirmEmbed.add_field(name=f"Floated Teams", value=extra)
