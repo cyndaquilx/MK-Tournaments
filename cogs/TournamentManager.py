@@ -776,6 +776,16 @@ class TournamentManager(commands.Cog):
         await ctx.send(advstr)
 
     @commands.command()
+    async def recalc_tables(self, ctx):
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        currRound = tournament.currentRound()
+        for room in currRound.rooms:
+            room.calcAdvanced(tournament)
+        await ctx.send("Recalculated rooms")
+
+    @commands.command()
     async def advanced(self, ctx, roundNum=0):
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
