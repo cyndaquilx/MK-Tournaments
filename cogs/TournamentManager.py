@@ -283,12 +283,12 @@ class TournamentManager(commands.Cog):
         await ctx.send(embed=finalEmbed)
         return True
 
-    async def customRooms(self, ctx, tournament, rooms, roundNum):
+    async def customRooms(self, ctx, tournament, rooms, roundNum, extra=0):
         teamsPerRoom = int(tournament.playersPerRoom/tournament.size)
         
-        minRooms = math.ceil(1 / teamsPerRoom * rooms)
+        minRooms = math.ceil(1 / teamsPerRoom * (rooms+extra))
         #maxRooms = math.floor((teamsPerRoom - 1) / teamsPerRoom * rooms)
-        maxRooms = math.floor((teamsPerRoom) / teamsPerRoom * rooms)
+        maxRooms = math.floor((teamsPerRoom) / teamsPerRoom * rooms + (extra/teamsPerRoom))
         await ctx.send(f"Please enter the number of rooms you want (min: {minRooms}, max: {maxRooms})")
         
         def roomCheck(m: discord.Message):
@@ -303,14 +303,18 @@ class TournamentManager(commands.Cog):
             await ctx.send("Timed out: Use `!advConfig` to restart")
             return False
         newRooms = int(resp.content)
-        numAdvancing = int(newRooms * teamsPerRoom / rooms)
-        numExtra = int((newRooms * teamsPerRoom) % rooms)
+        numAdvancing = int(newRooms * (teamsPerRoom / rooms))
+        if extra > 0:
+            numAdvancing -= (teamsPerRoom / extra)
+        numExtra = int((newRooms * teamsPerRoom - extra) % rooms)
         confirmEmbed = discord.Embed(title="Confirmation",
                                      description="Please confirm that these settings are correct (yes/no)")
         confirmEmbed.add_field(name=f"Round {roundNum} rooms", value=rooms)
         confirmEmbed.add_field(name="Teams advancing", value=f"{numAdvancing}/{teamsPerRoom}", inline=False)
         if numExtra > 0:
             confirmEmbed.add_field(name=f"{common.getNthPlace(numAdvancing+1)} place teams", value=numExtra)
+        if extra > 0:
+            confirmEmbed.add_field(name=f"Floated Teams", value=extra)
         confirmEmbed.add_field(name=f"# of Round {roundNum+1} rooms", value=newRooms, inline=False)
         await ctx.send(embed=confirmEmbed)
         try:
@@ -385,7 +389,7 @@ class TournamentManager(commands.Cog):
             if opt > 0 and opt <= len(nxt):
                 chosenAdv = nxt[opt-1]
             else:
-                custom = await self.customRooms(ctx, tournament, rooms, roundNum)
+                custom = await self.customRooms(ctx, tournament, rooms, roundNum, extra=extra)
                 if custom is False:
                     return False
                 chosenAdv = custom
