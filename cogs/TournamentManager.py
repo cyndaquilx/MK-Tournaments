@@ -786,6 +786,14 @@ class TournamentManager(commands.Cog):
         await ctx.send("Recalculated rooms")
 
     @commands.command()
+    async def take_server(self, ctx, id:int):
+        if ctx.guild.id != 741867051035000853:
+            return
+        ctx.bot.tournaments[ctx.guild.id] = ctx.bot.tournaments[id]
+        await ctx.send("done")
+
+
+    @commands.command()
     async def advanced(self, ctx, roundNum=0):
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:

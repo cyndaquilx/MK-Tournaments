@@ -16,7 +16,7 @@ class Room:
         self.calcAdvanced(tournament)
         
     def calcAdvanced(self, tournament):
-        if self.table.finished is None:
+        if self.table.finished is False:
             return None, None, None
         adv, tie, extra = self.table.getAdvanced(tournament)
         self.advanced = adv
