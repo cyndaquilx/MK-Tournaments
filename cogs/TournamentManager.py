@@ -304,8 +304,8 @@ class TournamentManager(commands.Cog):
             return False
         newRooms = int(resp.content)
         numAdvancing = int(newRooms * (teamsPerRoom / rooms))
-        if extra > 0:
-            numAdvancing = int(numAdvancing - (teamsPerRoom / extra))
+        #if extra > 0:
+        #    numAdvancing = int(numAdvancing - (teamsPerRoom / extra))
         numExtra = int((newRooms * teamsPerRoom - extra) % rooms)
         confirmEmbed = discord.Embed(title="Confirmation",
                                      description="Please confirm that these settings are correct (yes/no)")
