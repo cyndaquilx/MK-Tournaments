@@ -303,9 +303,10 @@ class TournamentManager(commands.Cog):
             await ctx.send("Timed out: Use `!advConfig` to restart")
             return False
         newRooms = int(resp.content)
-        numAdvancing = int(newRooms * (teamsPerRoom / rooms))
-        #if extra > 0:
-        #    numAdvancing = int(numAdvancing - (teamsPerRoom / extra))
+        numAdvancing = newRooms * (teamsPerRoom / rooms)
+        if extra > 0:
+            numAdvancing -= (teamsPerRoom / extra)
+        numAdvancing = int(numAdvancing)
         numExtra = int((newRooms * teamsPerRoom - extra) % rooms)
         confirmEmbed = discord.Embed(title="Confirmation",
                                      description="Please confirm that these settings are correct (yes/no)")
