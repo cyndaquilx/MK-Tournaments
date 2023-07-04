@@ -1,5 +1,5 @@
 #all lower case
-print_formats = ['mkc', 'mkb', 'summit', 'none']
+print_formats = ['mkc', 'mkb', 'summit', 'mkw', 'none']
 
 async def printSummit(ctx, rooms, roomnum=0):
     def playerStr(player):
@@ -56,6 +56,42 @@ async def printMKC(ctx, rooms, roomnum=0):
         send += "```"
         await ctx.send(send)
 
+async def printMKW(ctx, rooms, roomnum=0):
+    def playerStr(player):
+        return(f"{player.tableName()} ({player.fc})")
+    def teamStr(team):
+        return(" ".join([playerStr(p) for p in team.players]))
+    def roomStr(room):
+        msg = f"**Room {room.roomNum}**\n"
+        hostTeam = room.teams[0]
+        hostPlayer = hostTeam.getHost()
+        if hostPlayer is not None:
+            msg += f"**{playerStr(hostPlayer)}** "
+        otherPlayers = []
+        for player in hostTeam.players:
+            if player == hostPlayer:
+                continue
+            otherPlayers.append(player)
+        msg += " ".join([playerStr(p) for p in otherPlayers])
+        msg += "\n"
+        for i in range(1, len(room.teams)):
+            msg += f"{teamStr(room.teams[i])}\n"
+        msg += "-\n"
+        return msg
+    if roomnum > 0:
+        await ctx.send("```" + roomStr(rooms[roomnum-1]) + "```")
+        return
+    send = "```"
+    for i in range(len(rooms)):
+        send += roomStr(rooms[i])
+        if len(send) > 1500:
+            send += "```"
+            await ctx.send(send)
+            send = "```"
+    if len(send) > 3:
+        send += "```"
+        await ctx.send(send)
+
 async def printDefault(ctx, rooms, roomnum=0):
     if roomnum > 0:
         await ctx.send(str(rooms[roomnum-1]))
@@ -74,5 +110,7 @@ async def printRooms(ctx, print_format, rooms, roomNum):
         await printMKC(ctx, rooms, roomNum)
     elif print_format == "summit":
         await printSummit(ctx, rooms, roomNum)
+    elif print_format == "mkw":
+        await printMKW(ctx, rooms, roomNum)
     else:
         await printDefault(ctx, rooms, roomNum)
