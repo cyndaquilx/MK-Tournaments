@@ -798,7 +798,30 @@ class TournamentManager(commands.Cog):
         ctx.bot.tournaments[ctx.guild.id] = ctx.bot.tournaments[id]
         await ctx.send("done")
 
-
+    @commands.command()
+    async def editRaces(self, ctx, races:int):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        currentRound = tournament.currentRound()
+        if currentRound is None:
+            await ctx.send("There are currently no rounds in the tournament; use `!nextRound`")
+            return
+        await ctx.send(f"Do you want to change the number of races this round to {races}? (yes/no)")
+        try:
+            resp = await yes_no_check(ctx)
+            if resp.content.lower() == "no":
+                await ctx.send("Cancelled editing number of races")
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled editing number of races")
+            return
+        currentRound.races = races
+        await ctx.send("Successfully edited the number of races")
+        
     @commands.command()
     async def advanced(self, ctx, roundNum=0):
         tournament = ctx.bot.tournaments[ctx.guild.id]
