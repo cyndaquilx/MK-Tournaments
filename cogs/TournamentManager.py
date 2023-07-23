@@ -288,7 +288,7 @@ class TournamentManager(commands.Cog):
         
         minRooms = math.ceil(1 / teamsPerRoom * (rooms+extra))
         #maxRooms = math.floor((teamsPerRoom - 1) / teamsPerRoom * rooms)
-        maxRooms = math.floor((teamsPerRoom) / teamsPerRoom * rooms + (extra/teamsPerRoom))
+        maxRooms = math.floor(rooms + (extra/teamsPerRoom))
         await ctx.send(f"Please enter the number of rooms you want (min: {minRooms}, max: {maxRooms})")
         
         def roomCheck(m: discord.Message):
@@ -303,9 +303,14 @@ class TournamentManager(commands.Cog):
             await ctx.send("Timed out: Use `!advConfig` to restart")
             return False
         newRooms = int(resp.content)
+        # number of teams advancing = number of teams in next round (newRooms * teamsPerRoom)
+        # divided by number of rooms in current round
         numAdvancing = newRooms * (teamsPerRoom / rooms)
         if extra > 0:
-            numAdvancing -= (teamsPerRoom / extra)
+            # if the number of extra teams is the same as the number of rooms in last round,
+            # logically, one less person per room would advance to achieve the number of rooms
+            # specified.
+            numAdvancing -= (extra/rooms)
         numAdvancing = int(numAdvancing)
         numExtra = int((newRooms * teamsPerRoom - extra) % rooms)
         confirmEmbed = discord.Embed(title="Confirmation",
