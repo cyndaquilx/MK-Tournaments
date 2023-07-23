@@ -16,6 +16,15 @@ class lounge(commands.Cog):
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
+        await ctx.send(f"Do you want to get MMR for teams in Season {season}? (yes/no)")
+        try:
+            resp = await yes_no_check(ctx)
+            if resp.content.lower() == "no":
+                await ctx.send("Cancelled getting MMR")
+                return
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled getting MMR")
+            return
         base_url = "https://www.mk8dx-lounge.com" + '/api/player?'
         if season is not None:
             base_url += f"season={int(season)}&"
@@ -130,7 +139,7 @@ class lounge(commands.Cog):
                 await ctx.send("Cancelled floating teams")
                 return
         except asyncio.TimeoutError:
-            await ctx.send("Timed out: Cancelled creating tournament")
+            await ctx.send("Timed out: Cancelled floating teams")
             return
         teams = tournament.get_unfloated_teams()
         floated_teams = []
