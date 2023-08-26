@@ -1106,5 +1106,23 @@ class TournamentManager(commands.Cog):
             except Exception as e:
                 pass
 
+    @commands.command()
+    async def dumbfix(self, ctx):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        currRound = tournament.currentRound()
+        i = 0
+        for team in currRound:
+            if team not in tournament.teams:
+                i += 1
+                tournament.teams.append(team)
+        await ctx.send(f"readded {i} missing teams")
+        
+        
+
 async def setup(bot):
     await bot.add_cog(TournamentManager(bot))
