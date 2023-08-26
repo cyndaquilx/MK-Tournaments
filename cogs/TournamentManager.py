@@ -1116,7 +1116,7 @@ class TournamentManager(commands.Cog):
             return
         currRound = tournament.currentRound()
         i = 0
-        for team in currRound:
+        for team in currRound.teams:
             if team not in tournament.teams:
                 i += 1
                 tournament.teams.append(team)
