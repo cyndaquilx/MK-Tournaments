@@ -44,12 +44,16 @@ class lounge(commands.Cog):
                             continue
                         player_data = await resp.json()
                         if 'maxMmr' not in player_data.keys():
-                            player.mmr = 0
+                            #player.mmr = 0
+                            if 'mmr' in player_data.keys():
+                                player.mmr = player_data['mmr']
+                            else:
+                                player.mmr = 0
                             #not_found.append(player)
                             continue
                         player.mmr = player_data['maxMmr']
                 if i > 0 and i % 10 == 0:
-                    await progress.edit(f"Working... ({i}/{len(tournament.teams)})")
+                    await progress.edit(content=f"Working... ({i}/{len(tournament.teams)})")
         not_found_msg = "\n".join([f"{str(player)} - {player.miiName}" for player in not_found])
         await ctx.send(f"done\nMMR for these players was not found:\n{not_found_msg}")
 
