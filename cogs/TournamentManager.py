@@ -1122,7 +1122,32 @@ class TournamentManager(commands.Cog):
                 tournament.teams.append(team)
         await ctx.send(f"readded {i} missing teams")
         
-        
+    @commands.command()
+    async def getHosts(self, ctx):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        msg = "```"
+        count = 0
+        msgs = []
+        for i, team in enumerate(tournament.teams):
+            if team.hasHost():
+                count += 1
+                player = team.getHost()
+                msg += f"{i+1}. {player.tableName()} - {player.discordTag}\n"
+                if len(msg) > 1500:
+                    msg += "```"
+                    msgs.append(msg)
+                    msg = "```"
+        if len(msg) > 3:
+            msg += "```"
+            msgs.append(msg)
+        await ctx.send(f"{count} hosts")
+        for msg in msgs:
+            await ctx.send(msg)
 
 async def setup(bot):
     await bot.add_cog(TournamentManager(bot))
