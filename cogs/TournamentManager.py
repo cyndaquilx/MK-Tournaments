@@ -8,6 +8,7 @@ from algorithms import parsing
 import aiohttp
 import asyncio
 import math
+import random
 
 class TournamentManager(commands.Cog):
     def __init__ (self, bot):
@@ -543,8 +544,12 @@ class TournamentManager(commands.Cog):
         rng_url = f"https://www.random.org/sequences/?min=0&max={numTeams-1}&format=plain&rnd=new&col=1"
         async with aiohttp.ClientSession() as session:
             async with session.get(rng_url) as resp:
-                rngText = await resp.text()
-        rngList = [int(num) for num in rngText.split()]
+                if resp.status == 200:
+                    rngText = await resp.text()
+                    rngList = [int(num) for num in rngText.split()]
+                else:
+                    rngRange = [i for i in range(numTeams)]
+                    rngList = random.sample(rngRange, k=len(rngRange))
         rooms = currentRound.seedRooms(numRooms, rngList, tournament)
         await ctx.send("Successfully randomized rooms; use `!printRooms` or `!pr` to view")
 
