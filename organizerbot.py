@@ -8,7 +8,10 @@ import asyncio
 import dill as pickle
 from os import path
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    format='[{asctime}] [{levelname:<8}] {name}: {message}',
+                    style='{')
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
