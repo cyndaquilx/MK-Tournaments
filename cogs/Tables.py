@@ -36,7 +36,8 @@ class Tables(commands.Cog):
         sb = table.scoreboard()
         msg = f"```!submit {roomNum}\n{sb}```" + \
         "\nPaste the above into https://hlorenzi.github.io/mk8d_ocr/table.html for the table." + \
-        "\nReplace the 0s with each player's score and use the `!submit` command to submit the table."
+        "\nReplace the 0s with each player's score and use the `!submit` command to submit the table." + \
+        "\n0をそれぞれのプレイヤーの点数に書き換え、  `!submit` こちらのコマンドを使用して集計を提出してください。"
         await ctx.send(msg)
 
     async def tableEmbed(self, ctx, tournament, tround, room, data):
@@ -123,11 +124,13 @@ class Tables(commands.Cog):
         e, f, players, scores = await self.tableEmbed(ctx, tournament, currRound, room, data)
         if e is None:
             return
-        content = f"{ctx.author.mention} Please react to this message with \U00002611 within the next 30 seconds to confirm the table is correct"
-        embedded = await ctx.send(file=f, content=content, embed=e)
-        #ballot box with check emoji
         CHECK_BOX = "\U00002611"
         X_MARK = "\U0000274C"
+        content = f"{ctx.author.mention} Please react to this message with {CHECK_BOX} within the next 30 seconds to confirm the table is correct" + \
+            f"\nこの集計に間違いが無ければ、30秒以内に{CHECK_BOX} を押してください。"
+        embedded = await ctx.send(file=f, content=content, embed=e)
+        #ballot box with check emoji
+        
         await embedded.add_reaction(CHECK_BOX)
         await embedded.add_reaction(X_MARK)
         submitted_msg = f"{ctx.author.mention} Successfully submitted table for room {roomid}! If there are any errors, you can fix them by using the `!submit` command again."
