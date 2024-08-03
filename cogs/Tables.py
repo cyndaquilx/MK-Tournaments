@@ -107,7 +107,8 @@ class Tables(commands.Cog):
             if total_score != exp_points:
                 e.add_field(name="Warning | 注意", value=f"This table has {total_score} points but this round expects"
                             + f" {exp_points} points! This may be an error\n"
-                            + f"この集計の合計点は {total_score} 点です。本回戦において、合計点は {exp_points}点になる必要があります。ご確認ください。")
+                            + f"この集計の合計点は {total_score} 点です。本回戦において、合計点は {exp_points}点になる必要があります。ご確認ください。",
+                            inline=False)
         
         e.set_image(url="attachment://MogiTable.png")
         return e, f, players, scores
