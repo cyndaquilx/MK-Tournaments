@@ -22,15 +22,15 @@ class Tables(commands.Cog):
         if roundNum == 0:
             table = tournament.getRoomTableNumber(roomNum)
             if table is None:
-                await ctx.send("Invalid room number")
+                await ctx.send("Invalid room number\nルームナンバーが正しくありません。")
                 return
         else:
             if roundNum < 1 or roundNum > len(tournament.rounds):
-                await ctx.send("Invalid round number")
+                await ctx.send("Invalid room number\nルームナンバーが正しくありません。")
                 return
             tRound = tournament.rounds[roundNum-1]
             if roomNum < 1 or roomNum > len(tRound.rooms):
-                await ctx.send("Invalid room number")
+                await ctx.send("Invalid room number\nルームナンバーが正しくありません。")
                 return
             table = tRound.rooms[roomNum-1].table
         sb = table.scoreboard()
@@ -45,10 +45,12 @@ class Tables(commands.Cog):
         pNum = int(len(room.teams) * tournament.size)
         
         if len(names) != pNum:
-            await ctx.send(f"Your table does not contain {pNum} valid score lines, try again!")
+            await ctx.send(f"Your table does not contain {pNum} valid score lines, try again!\n" + \
+                           f"{pNum}人全員の点数を書き込んだ上で再度提出してください。")
             return None, None, None, None
         if len(set(names)) != len(names):
-            await ctx.send("Duplicate names are not allowed! Try again")
+            await ctx.send("Duplicate names are not allowed! Try again\n" + \
+                           "同一プレイヤーが重複して書き込まれています。訂正の上再度提出してください。")
             return None, None, None, None
         players = room.getPlayersFromMiiNames(names)
         err_str = ""
@@ -56,6 +58,7 @@ class Tables(commands.Cog):
             if players[i] is None:
                 if len(err_str) == 0:
                     err_str += f"The following players cannot be found in Room {room.roomNum}:\n"
+                    err_str += f"以下のプレイヤーはRoom {room.roomNum}に存在しません。:\n"
                 err_str += f"{names[i]}\n"
         if len(err_str) > 0:
             await ctx.send(err_str)
@@ -102,8 +105,9 @@ class Tables(commands.Cog):
             exp_points = get_expected_points(tournament.game, pNum, tround.races)
             total_score = sum(scores)
             if total_score != exp_points:
-                e.add_field(name="Warning", value=f"This table has {total_score} points but this round expects"
-                            + f" {exp_points} points! This may be an error")
+                e.add_field(name="Warning | 注意", value=f"This table has {total_score} points but this round expects"
+                            + f" {exp_points} points! This may be an error\n"
+                            + f"この集計の合計点は {total_score} 点です。本回戦において、合計点は {exp_points}点になる必要があります。ご確認ください。")
         
         e.set_image(url="attachment://MogiTable.png")
         return e, f, players, scores
@@ -118,7 +122,7 @@ class Tables(commands.Cog):
         currRound = tournament.currentRound()
         room = tournament.getRoomNumber(roomid)
         if room is None:
-            await ctx.send("Invalid room number")
+            await ctx.send("Invalid room number\nルームナンバーが正しくありません。")
             return
         
         e, f, players, scores = await self.tableEmbed(ctx, tournament, currRound, room, data)
@@ -133,7 +137,8 @@ class Tables(commands.Cog):
         
         await embedded.add_reaction(CHECK_BOX)
         await embedded.add_reaction(X_MARK)
-        submitted_msg = f"{ctx.author.mention} Successfully submitted table for room {roomid}! If there are any errors, you can fix them by using the `!submit` command again."
+        submitted_msg = f"{ctx.author.mention} Successfully submitted table for room {roomid}! If there are any errors, you can fix them by using the `!submit` command again.\n" + \
+        f"Room {roomid} の集計は提出されました。集計を修正したい場合は、もう一度 `!submit` を使い提出してください。"
 
         def check(reaction, user):
             if user != ctx.author:
