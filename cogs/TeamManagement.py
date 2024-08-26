@@ -19,6 +19,9 @@ class TeamManagement(commands.Cog):
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
+        if tournament.started:
+            await ctx.send("The tournament has already been started, so you cannot add/remove registrations")
+            return
         teams = parsing.parseMKB(tournament.size, text)
         send = ""
         tournament.addTeamsFromLists(teams)
@@ -182,6 +185,9 @@ class TeamManagement(commands.Cog):
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
+            return
+        if tournament.started:
+            await ctx.send("The tournament has already been started, so you cannot add/remove registrations")
             return
         if id > len(tournament.teams):
             await ctx.send(f"There are only {len(tournament.teams)} teams in this tournamnet.")
