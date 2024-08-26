@@ -9,6 +9,7 @@ class mkc_tournaments(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=['site'])
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def addFromMKCTournaments(self, ctx, tid:int):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")

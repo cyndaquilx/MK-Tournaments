@@ -9,6 +9,7 @@ class lounge(commands.Cog):
         self.bot = bot
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def getmmr(self, ctx, season=None):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -120,6 +121,7 @@ class lounge(commands.Cog):
             await ctx.send(msg)
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def floatmmr(self, ctx, mmr:int, round:int):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")

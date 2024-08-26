@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO,
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', case_insensitive=True, intents=intents)
+bot = commands.Bot(command_prefix=('!', '```!'), case_insensitive=True, intents=intents)
 
 initial_extensions = ['cogs.TournamentManager', 'cogs.Tables',
                       'cogs.Registration', 'cogs.Results',
@@ -70,6 +70,9 @@ async def on_command_error(ctx, error):
         return
     if isinstance(error, commands.MissingPermissions):
         await(await ctx.send(f"You need the following permissions to use this command: {', '.join(error.missing_permissions)}")).delete(delay=10)
+        return
+    if isinstance(error, commands.MaxConcurrencyReached):
+        await ctx.send(f"The command `!{ctx.command.name}` can only be used once at a time!", delete_after=20)
         return
     raise error
 

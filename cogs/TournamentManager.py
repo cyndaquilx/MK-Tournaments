@@ -16,6 +16,7 @@ class TournamentManager(commands.Cog):
         self._progress_task = self.update_progress_channels.start()
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     @commands.has_guild_permissions(manage_guild=True)
     async def tournament(self, ctx, size:int):
         valid_sizes = [1, 2, 3, 4]
@@ -146,6 +147,7 @@ class TournamentManager(commands.Cog):
         await ctx.send(tournament.signups)
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def start(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -225,6 +227,7 @@ class TournamentManager(commands.Cog):
             return True
         
     @commands.command(aliases=['r1config'])
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def configureFirstRound(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -336,6 +339,7 @@ class TournamentManager(commands.Cog):
         return tournament.createCustomAdvancement(rooms, newRooms, numAdvancing, numExtra)
                 
     @commands.command(aliases=['advConfig'])
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def configureAdvancements(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -438,6 +442,7 @@ class TournamentManager(commands.Cog):
         return True
         
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def nextRound(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -490,6 +495,7 @@ class TournamentManager(commands.Cog):
         await ctx.send(f"Successfully advanced to round {newRound.roundNum}")
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def prevRound(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -506,6 +512,7 @@ class TournamentManager(commands.Cog):
         await ctx.send("Moved to previous round")
 
     @commands.command(aliases=['mr'])
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def makeRooms(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -595,6 +602,7 @@ class TournamentManager(commands.Cog):
         await common.printRooms(ctx, tournament.print_format, rooms, roomnum)
         
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def deleteRooms(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -624,6 +632,7 @@ class TournamentManager(commands.Cog):
         await ctx.send("Successfully deleted this round's rooms")
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def replace(self, ctx, id1:int, id2:int):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -670,6 +679,7 @@ class TournamentManager(commands.Cog):
         return
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def swap(self, ctx, id1:int, id2:int):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -787,6 +797,7 @@ class TournamentManager(commands.Cog):
         await ctx.send(advstr)
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def recalc_tables(self, ctx):
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
@@ -804,6 +815,7 @@ class TournamentManager(commands.Cog):
         await ctx.send("done")
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def editRaces(self, ctx, races:int):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -962,6 +974,7 @@ class TournamentManager(commands.Cog):
         await ctx.send(f"Successfully set results channel to {channel.mention}")
 
     @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
     async def tiebreak(self, ctx, roomNum:int):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
