@@ -4,7 +4,8 @@ from discord.ext import commands, tasks
 from objects import Tournament
 #import parsing
 from algorithms import parsing
-from common import yes_no_check, basic_check
+from common import yes_no_check, basic_check, has_organizer_role
+import asyncio
 
 class Registration(commands.Cog):
     def __init__ (self, bot):
@@ -43,6 +44,8 @@ class Registration(commands.Cog):
             await ctx.send("no tournament started yet")
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
 
         tag = False
         miiName = False
@@ -123,6 +126,8 @@ class Registration(commands.Cog):
             await ctx.send("no tournament started yet")
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
         tournament.signups = False
         await ctx.send("Closed registrations")
                 
@@ -405,6 +410,8 @@ class Registration(commands.Cog):
             await ctx.send("no tournament started yet")
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
         if len(tournament.pending_teams) == 0:
             await self.queue(ctx, "There are no pending teams for this tournament")
             return
