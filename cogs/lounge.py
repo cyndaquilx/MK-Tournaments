@@ -101,7 +101,7 @@ class lounge(commands.Cog):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return False
-        tournament = ctx.bot.tournaments[ctx.guild.id]
+        tournament: Tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
         msg = f"Team MMRs [{len(tournament.teams)}]\n```"
@@ -126,7 +126,7 @@ class lounge(commands.Cog):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return False
-        tournament = ctx.bot.tournaments[ctx.guild.id]
+        tournament: Tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
         if tournament.started is False:
@@ -147,15 +147,15 @@ class lounge(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Cancelled floating teams")
             return
-        teams = tournament.get_unfloated_teams()
-        floated_teams = []
-        for team in teams:
-            if team.avg_mmr() >= mmr:
-                floated_teams.append(team)
         if len(tournament.floated_teams) < round:
             for i in range(len(tournament.floated_teams), round):
                 tournament.floated_teams.append([])
+        floated_teams = []
         tournament.floated_teams[round-1] = floated_teams
+        teams = tournament.get_unfloated_teams()
+        for team in teams:
+            if team.avg_mmr() >= mmr:
+                floated_teams.append(team)
         await ctx.send("Done")
 
     @commands.command()
