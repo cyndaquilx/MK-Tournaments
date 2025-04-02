@@ -38,4 +38,6 @@ def get_expected_points(game, numPlayers:int, races:int):
         
     if game.lower() == "mkw":
         return int(pts['mkw'][numPlayers] * races)
+    elif game.lower() == "mk9":
+        return int(pts['mk9'][numPlayers] * races)
     return int(pts['mk8'][numPlayers] * races)
