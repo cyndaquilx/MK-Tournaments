@@ -10,6 +10,8 @@ class Tournament:
         self.game = game
         if game in ["MK7", "MKT"]:
             self.playersPerRoom = 8
+        elif game in ["MK9"]:
+            self.playersPerRoom = 24
         else:
             self.playersPerRoom = 12
         

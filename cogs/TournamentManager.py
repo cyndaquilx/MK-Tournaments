@@ -31,7 +31,7 @@ class TournamentManager(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Cancelled creating tournament")
             return
-        valid_games = ["MKW", "MK7", "MK8", "MK8DX", "MKT"]
+        valid_games = ["MKW", "MK7", "MK8", "MK8DX", "MKT", "MK9"]
         if resp.content.upper() not in valid_games:
             await ctx.send(f"Invalid game. Valid games are: {', '.join(valid_games)}")
             return
