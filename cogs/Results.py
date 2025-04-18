@@ -26,6 +26,8 @@ class Results(commands.Cog):
                 team = " ".join(p.fc for p in teams[i].players)
             elif arg == "reg":
                 team = " ".join(str(p.mkcID) for p in teams[i].players)
+            elif arg == "loungeid":
+                team = " ".join(str(p.loungeID) for p in teams[i].players)
             else:
                 team = str(teams[i])
             msg += f"{team} {placements[i]}\n"

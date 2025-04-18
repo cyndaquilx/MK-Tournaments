@@ -1,7 +1,7 @@
 class Player:
     def __init__(self, username=None, miiName=None, fc=None,
                  discordObj=None, discordTag=None, canHost=False,
-                 mkcID=None, confirmed=False, country=None):
+                 mkcID=None, confirmed=False, country=None, loungeID=None):
         self.username = username
         self.miiName = miiName
         self.fc = fc
@@ -11,6 +11,7 @@ class Player:
         self.mkcID = mkcID
         self.confirmed = confirmed
         self.country = country
+        self.loungeID = loungeID
         self.mmr = 0
 
     def __str__ (self):
