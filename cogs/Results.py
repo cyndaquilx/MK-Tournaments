@@ -86,7 +86,7 @@ class Results(commands.Cog):
                 roundPlacements.append(len(roundPlacements)+1)
             for placement in roundPlacements:
                 if placement + len(placements) <= 12:
-                    bonuses.append(final_bonuses[placement])
+                    bonuses.append(final_bonuses[placement+len(placements)])
                 else:
                     bonuses.append(int(i*100))
             teams.extend([s.team for s in sortableTeams])
