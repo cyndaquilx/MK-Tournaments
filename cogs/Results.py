@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 from objects import Tournament
 from common import has_organizer_role
 from io import StringIO
+import csv
 
 class Results(commands.Cog):
     def __init__ (self, bot):
@@ -31,7 +32,6 @@ class Results(commands.Cog):
             else:
                 team = str(teams[i])
             msg += f"{team} {placements[i]}\n"
-            #msg += f"{teams[i].mkcID} {placements[i]}\n"
             if len(msg) > 1500:
                 msg += "```"
                 await ctx.send(msg)
@@ -40,6 +40,65 @@ class Results(commands.Cog):
             msg += "```"
             await ctx.send(msg)
         #await ctx.send(placements)
+
+    # used for SUMMIT finale FFA
+    @commands.command()
+    async def loungePrizes(self, ctx):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if tournament.finished is False:
+            await ctx.send("The tournament must be finished to use this command")
+            return
+        teams = []
+        placements = []
+        bonuses = []
+        final_bonuses = {
+            1: 1000,
+            2: 900,
+            3: 850,
+            4: 800,
+            5: 750,
+            6: 700,
+            7: 700,
+            8: 700,
+            9: 700,
+            10: 700,
+            11: 700,
+            12: 700
+        }
+        for i in range(len(tournament.rounds)-1, -1, -1):
+            currRound = tournament.rounds[i]
+            sortableTeams = []
+            for room in currRound.rooms:
+                sortableTeams.extend(room.table.getSortableTeams(tournament))
+            sortableTeams = [s for s in sortableTeams if s.team not in teams]
+            sortableTeams.sort(reverse=True)
+            roundPlacements = []
+            for team in sortableTeams:
+                if len(roundPlacements) > 0:
+                    if team.rank == sortableTeams[len(roundPlacements)-1].rank:
+                        roundPlacements.append(roundPlacements[len(roundPlacements)-1])
+                        continue
+                roundPlacements.append(len(roundPlacements)+1)
+            for placement in roundPlacements:
+                if placement <= 12:
+                    bonuses.append(final_bonuses[placement])
+                else:
+                    bonuses.append(int(i*100))
+            teams.extend([s.team for s in sortableTeams])
+            placements.extend([p + len(placements) for p in roundPlacements])
+        output = StringIO()
+        writer = csv.writer(output)
+        for i in range(len(teams)):
+            writer.writerow([p.loungeID for p in teams[i].players] + [placements[i], bonuses[i]])
+        output.seek(0)
+        f = discord.File(output, filename="bonuses.csv")
+        await ctx.send(file=f)
+        
 
     @commands.command()
     async def archiveTables(self, ctx):
