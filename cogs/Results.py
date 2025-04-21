@@ -85,7 +85,7 @@ class Results(commands.Cog):
                         continue
                 roundPlacements.append(len(roundPlacements)+1)
             for placement in roundPlacements:
-                if placement <= 12:
+                if placement + len(placements) <= 12:
                     bonuses.append(final_bonuses[placement])
                 else:
                     bonuses.append(int(i*100))
