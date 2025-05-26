@@ -1,7 +1,9 @@
 from .table import Table
+from .team import Team
+from .player import Player
 
 class Room:
-    def __init__ (self, teams:list, roundNum:int, roomNum:int, size:int):
+    def __init__ (self, teams:list[Team], roundNum:int, roomNum:int, size:int):
         self.teams = teams
         self.table = Table(teams, roundNum, roomNum, size)
         self.roundNum = roundNum
@@ -70,17 +72,18 @@ class Room:
         return msg
 
     def mkcStr(self):
-        msg = f"[b]Room {self.roomNum}[/b]\n"
+        msg = f"### Room {self.roomNum}\n"
         hostTeam = self.teams[0]
         hostPlayer = hostTeam.getHost()
         if hostPlayer is not None:
-            msg += f"[B]{hostPlayer.mkcStr()}[/B] + "
-        otherPlayers = []
+            msg += f"**{hostPlayer.mkcStr()}**"
+        otherPlayers: list[Player] = []
         for player in hostTeam.players:
             if player == hostPlayer:
                 continue
             otherPlayers.append(player)
-        msg += " + ".join([p.mkcStr() for p in otherPlayers])
+        if len(otherPlayers):
+            msg += " + ".join([p.mkcStr() for p in otherPlayers])
         msg += "\n"
         for i in range(1, len(self.teams)):
             msg += f"{self.teams[i].mkcStr()}\n"

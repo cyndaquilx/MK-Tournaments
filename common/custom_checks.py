@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+from objects import TOBot
 
 #ROLE CHECKS
 
@@ -56,12 +57,13 @@ async def basic_check(ctx):
     resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
-async def yes_no_check(ctx):
+async def yes_no_check(ctx: commands.Context[TOBot]):
     def check(m: discord.Message):
         if m.author.id != ctx.author.id or m.channel.id != ctx.channel.id:
             return False
         if m.content.lower() == "yes" or m.content.lower() == "no":
             return True
+        return False
     resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 

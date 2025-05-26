@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from objects import Tournament
+from objects import Tournament, TOBot
 from common import (has_organizer_role, basic_check, yes_no_check,
                     number_check, num_exit_check, optionCheck, getNthPlace)
 import common
@@ -110,14 +110,16 @@ class TournamentManager(commands.Cog):
         await ctx.send("Successfully created the tournament!")
 
     @commands.command()
-    async def addHostRole(self, ctx, role:discord.Role):
+    @commands.guild_only()
+    async def addHostRole(self, ctx: commands.Context[TOBot], role:discord.Role):
+        assert ctx.guild is not None
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
-        if role.id in self.host_roles:
+        if role.id in tournament.host_roles:
             await ctx.send("This role already has host privileges")
             return
         tournament.host_roles.append(role.id)
@@ -147,8 +149,10 @@ class TournamentManager(commands.Cog):
         await ctx.send(tournament.signups)
 
     @commands.command()
+    @commands.guild_only()
     @commands.max_concurrency(1, commands.BucketType.guild)
-    async def start(self, ctx):
+    async def start(self, ctx: commands.Context[TOBot]):
+        assert ctx.guild is not None
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
@@ -170,6 +174,29 @@ class TournamentManager(commands.Cog):
         tournament.started = True
         tournament.signups = False
         await ctx.send("Successfully started the tournament")
+
+    @commands.command()
+    @commands.guild_only()
+    @commands.max_concurrency(1, commands.BucketType.guild)
+    async def end(self, ctx: commands.Context[TOBot]):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        await ctx.send("**WARNING:** There is no way of retrieving the tournament data once the tournament has been ended. Are you sure you would like to end the tournament? (yes/no)")
+        try:
+            resp = await yes_no_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled ending tournament")
+            return
+        if resp.content.lower() == "no":
+            await ctx.send("Cancelled ending tournament")
+            return
+        del ctx.bot.tournaments[ctx.guild.id]
+        await ctx.send("Successfully ended tournament")
 
     async def customCap(self, ctx, tournament, numTeams):
         players = tournament.playersPerRoom
