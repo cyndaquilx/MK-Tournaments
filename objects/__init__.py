@@ -1,3 +1,5 @@
+from .Config import *
+from .TOBot import *
 from .player import *
 from .room import *
 from .round import *

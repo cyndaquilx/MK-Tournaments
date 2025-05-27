@@ -5,7 +5,6 @@
 /config.json
 /config2.json
 /*.pkl
-/cogs/*
 /commands*
 !/cogs/Registration.py
 !/cogs/Tables.py
@@ -15,3 +14,4 @@
 !/cogs/mkc_tournaments.py
 !/cogs/lounge.py
 /organizerbot_admin.py
+/.vscode*

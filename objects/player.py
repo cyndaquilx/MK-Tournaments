@@ -1,7 +1,7 @@
 class Player:
-    def __init__(self, username=None, miiName=None, fc=None,
-                 discordObj=None, discordTag=None, canHost=False,
-                 mkcID=None, confirmed=False, country=None, loungeID=None):
+    def __init__(self, username: str | None = None, miiName: str | None = None, fc: str | None = None,
+                 discordObj: int | None = None, discordTag: str | None = None, canHost=False,
+                 mkcID: int | None = None, confirmed=False, country: str | None = None, loungeID: int | None = None):
         self.username = username
         self.miiName = miiName
         self.fc = fc
@@ -29,10 +29,11 @@ class Player:
         self.canHost = not self.canHost
 
     def tableName(self):
+        name = ''
         if self.miiName is not None and self.miiName != "":
             name = self.miiName
         #if self.username is not None:
-        else:
+        elif self.username:
             name = self.username
         if name.startswith("#"):
             name = "." + name

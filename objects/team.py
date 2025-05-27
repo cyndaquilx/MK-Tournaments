@@ -1,7 +1,8 @@
 from .player import Player
 
 class Team:
-    def __init__ (self, players:list, tag=None, seed=None, mkcID=None, mkcHost=False):
+    def __init__ (self, players:list[Player], tag: str | None = None, seed: int | None = None, mkcID: int | None = None, 
+                  mkcHost=False):
         self.players = players
         self.tag = tag
         self.seed = seed

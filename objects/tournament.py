@@ -4,7 +4,7 @@ from .team import Team
 from .player import Player
 
 class Tournament:
-    def __init__(self, size:int, name, game, organizerRoles, hostRoles):
+    def __init__(self, size: int, name: str, game: str, organizerRoles: list[int], hostRoles: list[int]):
         self.size = size
         self.name = name
         self.game = game
@@ -15,9 +15,9 @@ class Tournament:
         
         self.started = False
         self.finished = False
-        self.teams = []
-        self.pending_teams = []
-        self.floated_teams = []
+        self.teams: list[Team] = []
+        self.pending_teams: list[Team] = []
+        self.floated_teams: list[list[Team]] = []
 
         self.organizer_roles = organizerRoles
         self.host_roles = hostRoles
@@ -190,12 +190,10 @@ class Tournament:
         self.pending_teams.append(squad)
 
     def get_unfloated_teams(self):
-        teams = []
+        teams: list[Team] = []
         for team in self.teams:
-            #print(team)
             is_floated = False
             for round in self.floated_teams:
-                #print(", ".join([str(team) for team in round]))
                 if team in round:
                     is_floated = True
             if is_floated:
