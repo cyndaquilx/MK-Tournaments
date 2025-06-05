@@ -2,6 +2,7 @@ from algorithms import advanceAlg
 from .round import Round
 from .team import Team
 from .player import Player
+from .table import SortableTeam
 
 class Tournament:
     def __init__(self, size: int, name: str, game: str, organizerRoles: list[int], hostRoles: list[int]):
@@ -241,11 +242,11 @@ class Tournament:
         return advanceAlg.Advancement(oldRooms, newRooms, adv, topscorers)
 
     def getPlacements(self):
-        teams = []
-        placements = []
+        teams: list[Team] = []
+        placements: list[int] = []
         for i in range(len(self.rounds)-1, -1, -1):
             currRound = self.rounds[i]
-            sortableTeams = []
+            sortableTeams: list[SortableTeam] = []
             for room in currRound.rooms:
                 sortableTeams.extend(room.table.getSortableTeams(self))
             sortableTeams = [s for s in sortableTeams if s.team not in teams]
