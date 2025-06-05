@@ -4,16 +4,16 @@ from objects import TOBot, Room, Player, Team
 #all lower case
 print_formats = ['mkc', 'mkb', 'summit', 'mkw', 'none']
 
-async def printSummit(ctx, rooms, roomnum=0):
-    def playerStr(player):
+async def printSummit(ctx, rooms: list[Room], roomnum=0):
+    def playerStr(player: Player):
         if player.canHost:
             host = "★進"
         else:
             host = ""
         return(f"{player.miiName}{host} ({player.fc})")
-    def teamStr(team):
+    def teamStr(team: Team):
         return(" ".join([playerStr(p) for p in team.players]))
-    def roomStr(room):
+    def roomStr(room: Room):
         msg = f"### {room.roomNum}組\n"
         hostTeam = room.teams[0]
         hostPlayer = hostTeam.getHost()

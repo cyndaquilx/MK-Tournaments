@@ -3,7 +3,7 @@ from .room import Room
 class Round:
     def __init__ (self, teams:list, num:int, races:int):
         self.teams = teams
-        self.rooms = []
+        self.rooms: list[Room] = []
         self.progress_msgs = []
         self.randomized = False
         self.finished = False

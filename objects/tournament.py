@@ -27,8 +27,8 @@ class Tournament:
         self.prioritizeHosts = False
         self.numRound1Rooms = 0
 
-        self.adv_path = []
-        self.rounds = []
+        self.adv_path: list[advanceAlg.Advancement] = []
+        self.rounds: list[Round] = []
         
         self.signups = False
         self.required_tag = False
@@ -40,8 +40,10 @@ class Tournament:
             self.required_host = True
         
         self.can_channel = 0
-        self.progress_channel = None
-        self.results_channel = None
+        self.progress_channel: int | None = None
+        self.results_channel: int | None = None
+        self.room_channel: int | None = None
+        self.room_threads: list[list[int]] = []
 
         self.tiebreakRule = False
         self.hostRule = True
