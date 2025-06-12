@@ -4,16 +4,16 @@ from objects import TOBot, Room, Player, Team
 #all lower case
 print_formats = ['mkc', 'mkb', 'summit', 'mkw', 'none']
 
-async def printSummit(ctx, rooms, roomnum=0):
-    def playerStr(player):
+async def printSummit(ctx, rooms: list[Room], roomnum=0):
+    def playerStr(player: Player):
         if player.canHost:
             host = "★進"
         else:
             host = ""
         return(f"{player.miiName}{host} ({player.fc})")
-    def teamStr(team):
+    def teamStr(team: Team):
         return(" ".join([playerStr(p) for p in team.players]))
-    def roomStr(room):
+    def roomStr(room: Room):
         msg = f"### {room.roomNum}組\n"
         hostTeam = room.teams[0]
         hostPlayer = hostTeam.getHost()
@@ -75,11 +75,12 @@ async def printMKC(ctx: commands.Context[TOBot], rooms: list[Room], roomnum=0):
     send = "```"
     for i in range(len(rooms)):
         room_str = roomStr(rooms[i])
-        if len(send) + len(room_str) > 1500:
-            send += "```"
-            await ctx.send(send)
-            send = "```"
-        send += room_str
+        for line in room_str.splitlines():
+            if len(send) + len(line) > 1500:
+                send += "```"
+                await ctx.send(send)
+                send = "```"
+            send += f"{line}\n"
     if len(send) > 0:
         send += "```"
         await ctx.send(send)

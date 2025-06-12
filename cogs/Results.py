@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from objects import Tournament
+from objects import Tournament, TOBot
 from common import has_organizer_role
 from io import StringIO
 import csv
@@ -10,7 +10,9 @@ class Results(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def placements(self, ctx, arg=""):
+    @commands.guild_only()
+    async def placements(self, ctx: commands.Context[TOBot], arg=""):
+        assert ctx.guild is not None
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
@@ -24,11 +26,13 @@ class Results(commands.Cog):
         msg = "```"
         for i in range(len(teams)):
             if arg == "fc":
-                team = " ".join(p.fc for p in teams[i].players)
+                team = " ".join(str(p.fc) for p in teams[i].players)
             elif arg == "reg":
                 team = " ".join(str(p.mkcID) for p in teams[i].players)
             elif arg == "loungeid":
                 team = " ".join(str(p.loungeID) for p in teams[i].players)
+            elif arg == "mkc":
+                team = str(teams[i].mkcID)
             else:
                 team = str(teams[i])
             msg += f"{team} {placements[i]}\n"
@@ -39,10 +43,9 @@ class Results(commands.Cog):
         if len(msg) > 3:
             msg += "```"
             await ctx.send(msg)
-        #await ctx.send(placements)
 
     # used for SUMMIT finale FFA
-    @commands.command()
+    #@commands.command()
     async def loungePrizes(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")

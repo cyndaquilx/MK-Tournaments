@@ -2,16 +2,14 @@ from algorithms import advanceAlg
 from .round import Round
 from .team import Team
 from .player import Player
+from .table import SortableTeam
 
 class Tournament:
-    def __init__(self, size: int, name: str, game: str, organizerRoles: list[int], hostRoles: list[int]):
+    def __init__(self, size: int, name: str, game: str, players_per_room: int, organizerRoles: list[int], hostRoles: list[int]):
         self.size = size
         self.name = name
         self.game = game
-        if game in ["MK7", "MKT"]:
-            self.playersPerRoom = 8
-        else:
-            self.playersPerRoom = 12
+        self.playersPerRoom = players_per_room
         
         self.started = False
         self.finished = False
@@ -27,8 +25,8 @@ class Tournament:
         self.prioritizeHosts = False
         self.numRound1Rooms = 0
 
-        self.adv_path = []
-        self.rounds = []
+        self.adv_path: list[advanceAlg.Advancement] = []
+        self.rounds: list[Round] = []
         
         self.signups = False
         self.required_tag = False
@@ -40,8 +38,10 @@ class Tournament:
             self.required_host = True
         
         self.can_channel = 0
-        self.progress_channel = None
-        self.results_channel = None
+        self.progress_channel: int | None = None
+        self.results_channel: int | None = None
+        self.room_channel: int | None = None
+        self.room_threads: list[list[int]] = []
 
         self.tiebreakRule = False
         self.hostRule = True
@@ -239,11 +239,11 @@ class Tournament:
         return advanceAlg.Advancement(oldRooms, newRooms, adv, topscorers)
 
     def getPlacements(self):
-        teams = []
-        placements = []
+        teams: list[Team] = []
+        placements: list[int] = []
         for i in range(len(self.rounds)-1, -1, -1):
             currRound = self.rounds[i]
-            sortableTeams = []
+            sortableTeams: list[SortableTeam] = []
             for room in currRound.rooms:
                 sortableTeams.extend(room.table.getSortableTeams(self))
             sortableTeams = [s for s in sortableTeams if s.team not in teams]

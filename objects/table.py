@@ -145,8 +145,7 @@ class Table:
         return advancingTeams, tieTeams, extraTeams
 
     def getSortableTeams(self, tournament):
-        sortableTeams = []
-        lastRoundTeams = []
+        sortableTeams: list[SortableTeam] = []
         for team in self.teams:
             rank = self.getRank(team, self.playerScores)
             s = SortableTeam(team, tournament.teams, self.playerScores, rank, self.roundNum)

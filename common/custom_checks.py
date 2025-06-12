@@ -49,7 +49,7 @@ async def has_host_role(ctx, tournament):
 
 #BOT.WAIT_FOR CHECKS
 
-async def basic_check(ctx):
+async def basic_check(ctx: commands.Context[TOBot]):
     def check(m: discord.Message):
         if m.author.id != ctx.author.id or m.channel.id != ctx.channel.id:
             return False
@@ -67,7 +67,7 @@ async def yes_no_check(ctx: commands.Context[TOBot]):
     resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
-async def num_exit_check(ctx):
+async def num_exit_check(ctx: commands.Context[TOBot]):
     def check(m: discord.Message):
         if m.author.id != ctx.author.id or m.channel.id != ctx.channel.id:
             return False
@@ -75,10 +75,11 @@ async def num_exit_check(ctx):
             return True
         if m.content.isdigit():
             return True
+        return False
     resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
-async def optionCheck(ctx):
+async def optionCheck(ctx: commands.Context[TOBot]):
     def check(m: discord.Message):
         if m.author.id != ctx.author.id or m.channel.id != ctx.channel.id:
             return False
@@ -86,15 +87,17 @@ async def optionCheck(ctx):
             return True
         if m.content.isdigit():
             return True
+        return False
     resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 
-async def number_check(ctx):
+async def number_check(ctx: commands.Context[TOBot]):
     def check(m: discord.Message):
         if m.author.id != ctx.author.id or m.channel.id != ctx.channel.id:
             return False
         if m.content.isdigit():
             return True
+        return False
     resp = await ctx.bot.wait_for('message', check=check, timeout=60.0)
     return resp
 

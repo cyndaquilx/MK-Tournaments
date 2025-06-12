@@ -18,28 +18,47 @@ class TournamentManager(commands.Cog):
     @commands.command()
     @commands.max_concurrency(1, commands.BucketType.guild)
     @commands.has_guild_permissions(manage_guild=True)
-    async def tournament(self, ctx, size:int):
+    @commands.guild_only()
+    async def tournament(self, ctx: commands.Context[TOBot], size:int):
+        assert ctx.guild is not None
         valid_sizes = [1, 2, 3, 4]
         if size not in valid_sizes:
             await ctx.send(f"Invalid size: Valid sizes are: {', '.join([str(i) for i in valid_sizes])}")
             return
         await ctx.send(f"{ctx.author.mention} Before starting the tournament, there's a few steps that need to be completed.\n")
-        await ctx.send("`1.` What game is this tournament for (MKW, MK7, MK8, MK8DX, MKT)?")
+        await ctx.send("`1.` What game is this tournament for (MKW, MK7, MK8, MK8DX, MKT, MKWorld)?")
 
         try:
             resp = await basic_check(ctx)
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Cancelled creating tournament")
             return
-        valid_games = ["MKW", "MK7", "MK8", "MK8DX", "MKT"]
-        if resp.content.upper() not in valid_games:
+        valid_games = ["MKW", "MK7", "MK8", "MK8DX", "MKT", "MKWorld"]
+        upper_game_map = {
+            g.upper(): g for g in valid_games
+        }
+        if resp.content.upper() not in upper_game_map:
             await ctx.send(f"Invalid game. Valid games are: {', '.join(valid_games)}")
             return
-        game = resp.content.upper()
+        game = upper_game_map[resp.content.upper()]
         #since mk7/mkt are 8 players, only ffa and 2v2 are supported
         if size > 2 and game in ["MK7", "MKT"]:
             await ctx.send("Only FFA and 2v2 are supported for MK7/MKTour tournaments, try again")
             return
+        players_per_room = 12
+        if game in ["MK7", "MKT"]:
+            players_per_room = 8
+        elif game == "MKWorld":
+            await ctx.send("How many players per room? (12/24)")
+            try:
+                resp = await number_check(ctx)
+            except asyncio.TimeoutError:
+                await ctx.send("Timed out: Cancelled creating tournament")
+                return
+            players_per_room = int(resp.content)
+            if players_per_room not in [12, 24]:
+                await ctx.send("Error: Only room sizes of 12 or 24 are allowed for MKWorld, try again")
+                return
         await ctx.send("`2.` What is the name of your tournament?")
         try:
             resp = await basic_check(ctx)
@@ -105,7 +124,7 @@ class TournamentManager(commands.Cog):
         if resp.content.lower() == "no":
             await ctx.send("Cancelled creating tournament")
             return
-        ctx.bot.tournaments[ctx.guild.id] = Tournament(size, name, game, [orgRole.id], hostRoles)
+        ctx.bot.tournaments[ctx.guild.id] = Tournament(size, name, game, players_per_room, [orgRole.id], hostRoles)
         ctx.bot.tournaments[ctx.guild.id].tiebreakRule = tiebreakerRule
         await ctx.send("Successfully created the tournament!")
 
@@ -367,7 +386,9 @@ class TournamentManager(commands.Cog):
                 
     @commands.command(aliases=['advConfig'])
     @commands.max_concurrency(1, commands.BucketType.guild)
-    async def configureAdvancements(self, ctx):
+    @commands.guild_only()
+    async def configureAdvancements(self, ctx: commands.Context[TOBot]):
+        assert ctx.guild is not None
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
@@ -606,7 +627,9 @@ class TournamentManager(commands.Cog):
         return
 
     @commands.command(aliases=['pr'])
-    async def printRooms(self, ctx, roomnum=0):
+    @commands.guild_only()
+    async def printRooms(self, ctx: commands.Context[TOBot], roomnum=0):
+        assert ctx.guild is not None
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
@@ -979,7 +1002,9 @@ class TournamentManager(commands.Cog):
             await ctx.send(msg)
 
     @commands.command()
-    async def progressChannel(self, ctx, channel:discord.TextChannel):
+    @commands.guild_only()
+    async def progressChannel(self, ctx: commands.Context[TOBot], channel:discord.TextChannel):
+        assert ctx.guild is not None
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
@@ -990,7 +1015,9 @@ class TournamentManager(commands.Cog):
         await ctx.send(f"Successfully set progress channel to {channel.mention}")
 
     @commands.command()
-    async def resultsChannel(self, ctx, channel:discord.TextChannel):
+    @commands.guild_only()
+    async def resultsChannel(self, ctx: commands.Context[TOBot], channel:discord.TextChannel):
+        assert ctx.guild is not None
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
@@ -1150,22 +1177,6 @@ class TournamentManager(commands.Cog):
                     currRound.progress_msgs.append(message.id)
             except Exception as e:
                 pass
-
-    @commands.command()
-    async def dumbfix(self, ctx):
-        if ctx.guild.id not in ctx.bot.tournaments:
-            await ctx.send("no tournament started yet")
-            return
-        tournament = ctx.bot.tournaments[ctx.guild.id]
-        if await has_organizer_role(ctx, tournament) is False:
-            return
-        currRound = tournament.currentRound()
-        i = 0
-        for team in currRound.teams:
-            if team not in tournament.teams:
-                i += 1
-                tournament.teams.append(team)
-        await ctx.send(f"readded {i} missing teams")
         
     @commands.command()
     async def getHosts(self, ctx):
@@ -1194,5 +1205,143 @@ class TournamentManager(commands.Cog):
         for msg in msgs:
             await ctx.send(msg)
 
-async def setup(bot):
+    @commands.command(name="roomChannel")
+    async def set_room_channel(self, ctx: commands.Context[TOBot], channel: discord.TextChannel):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        tournament.room_channel = channel.id
+        await ctx.send(f"Set room thread channel to {channel.mention}")
+
+    @commands.command(name="makeRoomThreads", aliases=['mrt'])
+    @commands.max_concurrency(1, commands.BucketType.guild)
+    @commands.guild_only()
+    async def make_room_channels(self, ctx: commands.Context[TOBot]):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if len(tournament.adv_path) == 0:
+            await ctx.send("Please use !advconfig to configure the tournament's advancements before using this command")
+            return
+        if tournament.room_channel is None:
+            await ctx.send("Please use !roomChannel to set the channel where room threads will be created")
+            return
+        room_channel = await ctx.guild.fetch_channel(tournament.room_channel)
+        if not room_channel:
+            await ctx.send("Room channel could not be found")
+            return
+        assert isinstance(room_channel, discord.TextChannel)
+        while len(tournament.room_threads) < len(tournament.adv_path):
+            tournament.room_threads.append([])
+        
+        for i, round_threads in enumerate(tournament.room_threads):
+            if len(round_threads) >= tournament.adv_path[i].oldRooms:
+                continue
+            work_msg_start = f"Creating room threads for Round {i+1}... (this may take several minutes if there are >50 rooms)"
+            work_msg = await ctx.send(work_msg_start)
+            for j in range(len(round_threads), tournament.adv_path[i].oldRooms):
+                thread = await room_channel.create_thread(name=f"{tournament.name} - Round {i+1} Room {j+1}")
+                round_threads.append(thread.id)
+                if (j+1) % 5 == 0:
+                    await work_msg.edit(content=f"{work_msg_start} ({j+1}/{tournament.adv_path[i].oldRooms})")
+            await work_msg.edit(content=f"{work_msg_start} ({tournament.adv_path[i].oldRooms}/{tournament.adv_path[i].oldRooms})")
+            await ctx.send(f"Successfully created room threads for Round {i+1}/{len(tournament.room_threads)}")
+        await ctx.send("Created all room threads")
+
+    @commands.command(name="sendRoomMessages", aliases=['srm'])
+    @commands.max_concurrency(1, commands.BucketType.guild)
+    @commands.guild_only()
+    async def send_messages_in_room_channels(self, ctx: commands.Context[TOBot]):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if tournament.room_channel is None:
+            await ctx.send("Please use !roomChannel to set the channel where room threads will be created")
+            return
+        curr_round = tournament.currentRound()
+        if curr_round is None:
+            await ctx.send("Must be currently in a round to use this command")
+            return
+        if len(tournament.room_threads) < curr_round.roundNum:
+            await ctx.send("Room threads have not been created for this round; use !makeRoomThreads to create them")
+            return
+        round_room_threads = tournament.room_threads[curr_round.roundNum-1]
+        if len(round_room_threads) < curr_round.numRooms():
+            await ctx.send("This round does not have enough room channels; use !makeRoomThreads to create them")
+            return
+        if len(curr_round.rooms) == 0:
+            await ctx.send("Rooms have not been created for this round; use !makeRooms to create them")
+            return
+        room_channel = await ctx.guild.fetch_channel(tournament.room_channel)
+        if room_channel is None:
+            await ctx.send("Room channel could not be found")
+            return
+        assert isinstance(room_channel, discord.TextChannel)
+        work_msg = await ctx.send("Working...")
+        for i, room in enumerate(curr_round.rooms):
+            thread = room_channel.get_thread(round_room_threads[i])
+            if thread is None:
+                await ctx.send(f"Could not fetch thread for room {room.roomNum}")
+                continue
+            player_mentions: list[int | None] = []
+            for team in room.teams:
+                for player in team.players:
+                    player_mentions.append(player.discordObj)
+            host_player = room.teams[0].getHost()
+            if not host_player:
+                host_player = room.teams[0].players[0]
+            host_mention = f"<@{host_player.discordObj}>"
+            player_mention_str = " ".join([f"<@{m}>" for m in player_mentions if m is not None])
+            room_msg = f"`Round {curr_round.roundNum} Room {room.roomNum}`\n\n{player_mention_str}\n\nHost: {host_mention}\n\nScoreboard: `!scoreboard {room.roomNum}`"
+            await thread.send(room_msg)
+            if (i+1) % 10 == 0:
+                await work_msg.edit(content=f"Working... ({i+1}/{len(curr_round.rooms)})")
+        await work_msg.edit(content=f"Working... ({len(curr_round.rooms)}/{len(curr_round.rooms)})")
+        await ctx.send("Successfully added players to room threads")
+
+    @commands.command(name="myThread", aliases=['thread'])
+    @commands.guild_only()
+    async def add_me_to_room_thread(self, ctx: commands.Context[TOBot]):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        curr_round = tournament.currentRound()
+        if curr_round is None:
+            return
+        if tournament.room_channel is None:
+            await ctx.send("This tournament does not use the room threads feature")
+            return
+        if len(tournament.room_threads) < curr_round.roundNum:
+            return
+        room_channel = await ctx.guild.fetch_channel(tournament.room_channel)
+        if room_channel is None:
+            await ctx.send("Room channel could not be found")
+            return
+        assert isinstance(room_channel, discord.TextChannel)
+        round_room_threads = tournament.room_threads[curr_round.roundNum-1]
+        for room in curr_round.rooms:
+            for team in room.teams:
+                for player in team.players:
+                    if player.discordObj == ctx.author.id:
+                        thread = room_channel.get_thread(round_room_threads[room.roomNum])
+                        if thread:
+                            await thread.send(f"{ctx.author.mention}")
+                            return
+        await ctx.send("Could not find you in a room for this round")
+
+async def setup(bot: TOBot):
     await bot.add_cog(TournamentManager(bot))
