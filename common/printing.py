@@ -75,11 +75,12 @@ async def printMKC(ctx: commands.Context[TOBot], rooms: list[Room], roomnum=0):
     send = "```"
     for i in range(len(rooms)):
         room_str = roomStr(rooms[i])
-        if len(send) + len(room_str) > 1500:
-            send += "```"
-            await ctx.send(send)
-            send = "```"
-        send += room_str
+        for line in room_str.splitlines():
+            if len(send) + len(line) > 1500:
+                send += "```"
+                await ctx.send(send)
+                send = "```"
+            send += f"{line}\n"
     if len(send) > 0:
         send += "```"
         await ctx.send(send)

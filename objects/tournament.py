@@ -5,14 +5,11 @@ from .player import Player
 from .table import SortableTeam
 
 class Tournament:
-    def __init__(self, size: int, name: str, game: str, organizerRoles: list[int], hostRoles: list[int]):
+    def __init__(self, size: int, name: str, game: str, players_per_room: int, organizerRoles: list[int], hostRoles: list[int]):
         self.size = size
         self.name = name
         self.game = game
-        if game in ["MK7", "MKT"]:
-            self.playersPerRoom = 8
-        else:
-            self.playersPerRoom = 12
+        self.playersPerRoom = players_per_room
         
         self.started = False
         self.finished = False
