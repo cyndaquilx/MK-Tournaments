@@ -1337,7 +1337,7 @@ class TournamentManager(commands.Cog):
             for team in room.teams:
                 for player in team.players:
                     if player.discordObj == ctx.author.id:
-                        thread = room_channel.get_thread(round_room_threads[room.roomNum])
+                        thread = room_channel.get_thread(round_room_threads[room.roomNum-1])
                         if thread:
                             await thread.send(f"{ctx.author.mention}")
                             return
