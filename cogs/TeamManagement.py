@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from objects import Tournament
+from objects import Tournament, TOBot
 from common import has_organizer_role, basic_check, yes_no_check, number_check
 import common
 from algorithms import parsing
@@ -142,6 +142,7 @@ class TeamManagement(commands.Cog):
         await ctx.send(f"Successfully changed {str(player)}'s name to {resp.content}")
 
     @commands.command()
+    @commands.guild_only()
     async def editFC(self, ctx, teamid:int):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
@@ -178,6 +179,52 @@ class TeamManagement(commands.Cog):
             return
         player.fc = resp.content
         await ctx.send(f"Successfully changed {str(player)}'s FC to {resp.content}")
+
+    @commands.command()
+    @commands.guild_only()
+    async def editDiscord(self, ctx: commands.Context[TOBot], team_id: int):
+        assert ctx.guild is not None
+        tournament = ctx.bot.tournaments.get(ctx.guild.id, None)
+        if tournament is None:
+            await ctx.send("no tournament started yet")
+            return
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if team_id < 1:
+            await ctx.send("Please enter a number greater than 0")
+            return
+        if team_id > len(tournament.teams):
+            await ctx.send(f"Please enter a number inside the range of the number of teams registered {len(tournament.teams)}")
+            return
+        team = tournament.teams[team_id-1]
+        playersMsg = "Which player do you want to change?\n"
+        for i, player in enumerate(team.players):
+            playersMsg += f"`{i+1})` {str(player)} - {player.miiName}\n"
+        await ctx.send(playersMsg)
+        try:
+            resp = await number_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled Discord change")
+            return
+        choice = int(resp.content)
+        if choice < 1 or choice > len(team.players):
+            await ctx.send("Invalid player ID; try using this command again")
+            return
+        player = team.players[choice-1]
+        await ctx.send("What would you like to change their Discord to?")
+        try:
+            resp = await basic_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled FC change")
+            return
+        c = commands.MemberConverter()
+        try:
+            member = await c.convert(ctx, resp.content)
+        except:
+            await ctx.send("You did not mention a valid Discord member")
+            return
+        player.discordObj = member.id
+        await ctx.send(f"Successfully changed {str(player)}'s Discord to {member.mention}")
 
     @commands.command(aliases=['r'])
     async def remove(self, ctx, id:int):
