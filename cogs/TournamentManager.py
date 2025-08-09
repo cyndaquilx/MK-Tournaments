@@ -247,9 +247,9 @@ class TournamentManager(commands.Cog):
         players = tournament.playersPerRoom
         size = tournament.size
         if size == 1:
-            change = 2
+            change = 2*int(players/12)
         else:
-            change = size
+            change = size*int(players/12)
         minRooms = math.ceil(cap / (players/size))
         maxRooms = int(cap / ((players-change)/size))
         while True:
