@@ -192,7 +192,7 @@ class MKCentral(commands.Cog):
                         discord_id = int(mkc_player.discord.discord_id)
                     player = Player(mkc_player.name, mkc_player.mii_name, friend_code, discord_id,
                                     discord_tag, mkc_player.can_host, mkc_player.player_id,
-                                    not mkc_player.is_invite)
+                                    not mkc_player.is_invite, mkc_player.country_code)
                     team.addPlayer(player)
                 teams.append(team)
             tournament.addTeams(teams)

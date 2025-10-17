@@ -1304,7 +1304,8 @@ class TournamentManager(commands.Cog):
                 host_player = room.teams[0].players[0]
             host_mention = f"<@{host_player.discordObj}>"
             player_mention_str = " ".join([f"<@{m}>" for m in player_mentions if m is not None])
-            room_msg = f"`Round {curr_round.roundNum} Room {room.roomNum}`\n\n{player_mention_str}\n\nHost: {host_mention}\n\nScoreboard: `!scoreboard {room.roomNum}`"
+            thread_member_str = " ".join([f"<@{m}>" for m in tournament.thread_members])
+            room_msg = f"`Round {curr_round.roundNum} Room {room.roomNum}`\n\n{player_mention_str} {thread_member_str}\n\nHost: {host_mention}\n\nScoreboard: `!scoreboard {room.roomNum}`"
             await thread.send(room_msg)
             if (i+1) % 10 == 0:
                 await work_msg.edit(content=f"Working... ({i+1}/{len(curr_round.rooms)})")
@@ -1342,6 +1343,66 @@ class TournamentManager(commands.Cog):
                             await thread.send(f"{ctx.author.mention}")
                             return
         await ctx.send("Could not find you in a room for this round")
+
+    @commands.command(name="threadMember")
+    @commands.guild_only()
+    async def add_discord_members_to_room_threads(self, ctx: commands.Context[TOBot], members:commands.Greedy[discord.Member]):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if len(members) == 0:
+            await ctx.send("Please mention at least one member to use this command")
+            return
+        if tournament.room_channel is None:
+            await ctx.send("This tournament does not use the room threads feature")
+            return
+        tournament.thread_members.update([member.id for member in members])
+        await ctx.send(f"Added {' '.join([member.mention for member in members])} to the list of members pinged in every thread")
+
+    @commands.command(name="removeThreadMember")
+    @commands.guild_only()
+    async def remove_discord_members_from_room_threads(self, ctx: commands.Context[TOBot], members:commands.Greedy[discord.Member]):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if len(members) == 0:
+            await ctx.send("Please mention at least one member to use this command")
+            return
+        if tournament.room_channel is None:
+            await ctx.send("This tournament does not use the room threads feature")
+            return
+        tournament.thread_members.difference_update([member.id for member in members])
+        await ctx.send(f"Removed {' '.join([member.mention for member in members])} from the list of members pinged in every thread")
+
+    @commands.command(name="giveHostRole")
+    @commands.guild_only()
+    async def give_host_role_to_discord_members(self, ctx: commands.Context[TOBot]):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if len(tournament.host_roles) == 0:
+            await ctx.send("There are no host roles for this tournament, use !addHostRole to add one")
+            return
+        host_teams = tournament.getHostTeams()
+        host_role = ctx.guild.get_role(tournament.host_roles[0])
+        if host_role is None:
+            await ctx.send(f"Role with ID {tournament.host_roles[0]} was not found in this server")
+            return
+        await ctx.send("Working...")
+        for team in host_teams:
+            for player in team.players:
+                if player.canHost and player.discordObj:
+                    member = ctx.guild.get_member(player.discordObj)
+                    if not member:
+                        continue
+                    await member.add_roles(host_role)
+        await ctx.send("Gave out host role to all hosting players in the server")
 
 async def setup(bot: TOBot):
     await bot.add_cog(TournamentManager(bot))

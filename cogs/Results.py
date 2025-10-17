@@ -25,13 +25,13 @@ class Results(commands.Cog):
         teams, placements = tournament.getPlacements()
         msg = "```"
         for i in range(len(teams)):
-            if arg == "fc":
+            if arg.lower() == "fc":
                 team = " ".join(str(p.fc) for p in teams[i].players)
-            elif arg == "reg":
+            elif arg.lower() == "reg":
                 team = " ".join(str(p.mkcID) for p in teams[i].players)
-            elif arg == "loungeid":
+            elif arg.lower() == "loungeid":
                 team = " ".join(str(p.loungeID) for p in teams[i].players)
-            elif arg == "mkc":
+            elif arg.lower() == "mkc":
                 team = str(teams[i].mkcID)
             else:
                 team = str(teams[i])

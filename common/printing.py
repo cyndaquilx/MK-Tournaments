@@ -62,6 +62,7 @@ async def printMKC(ctx: commands.Context[TOBot], rooms: list[Room], roomnum=0):
                 continue
             otherPlayers.append(player)
         if len(otherPlayers):
+            msg += " + "
             msg += " + ".join([playerStr(p) for p in otherPlayers])
         msg += "  \n"
         for i in range(1, len(room.teams)):
@@ -86,22 +87,24 @@ async def printMKC(ctx: commands.Context[TOBot], rooms: list[Room], roomnum=0):
         await ctx.send(send)
 
 async def printMKW(ctx, rooms, roomnum=0):
-    def playerStr(player):
-        return(f"{player.tableName()} ({player.fc})")
-    def teamStr(team):
-        return(" ".join([playerStr(p) for p in team.players]))
-    def roomStr(room):
+    def playerStr(player: Player):
+        return(f"{player.tableName()} ({player.username})")
+    def teamStr(team: Team):
+        return(" + ".join([playerStr(p) for p in team.players]))
+    def roomStr(room: Room):
         msg = f"**Room {room.roomNum}**\n"
         hostTeam = room.teams[0]
         hostPlayer = hostTeam.getHost()
         if hostPlayer is not None:
-            msg += f"**{playerStr(hostPlayer)}** "
+            msg += f"**{hostPlayer.fc} (host) {playerStr(hostPlayer)}**"
         otherPlayers = []
         for player in hostTeam.players:
             if player == hostPlayer:
                 continue
             otherPlayers.append(player)
-        msg += " ".join([playerStr(p) for p in otherPlayers])
+        if len(otherPlayers):
+            msg += " + "
+        msg += " + ".join([playerStr(p) for p in otherPlayers])
         msg += "\n"
         for i in range(1, len(room.teams)):
             msg += f"{teamStr(room.teams[i])}\n"

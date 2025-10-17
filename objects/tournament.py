@@ -36,12 +36,14 @@ class Tournament:
             self.required_host = False
         else:
             self.required_host = True
+        self.required_mkc = False
         
         self.can_channel = 0
         self.progress_channel: int | None = None
         self.results_channel: int | None = None
         self.room_channel: int | None = None
         self.room_threads: list[list[int]] = []
+        self.thread_members: set[int] = set[int]()
 
         self.tiebreakRule = False
         self.hostRule = True
@@ -92,7 +94,7 @@ class Tournament:
         return ordinal(self.adv_path[num-1].adv + 1)
 
     def getHostTeams(self, teams=None):
-        hosts = []
+        hosts: list[Team] = []
         if teams is None:
             teams = self.teams
         for team in teams:
