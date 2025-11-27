@@ -1,7 +1,11 @@
+from .team import Team
+from .player import Player
+
 class Table:
-    def __init__(self, teams, roundNum, roomNum, size):
+    def __init__(self, teams: list[Team], roundNum: int, roomNum: int, size: int):
         self.teams = teams
-        self.playerScores = {}
+        self.playerScores: dict[Player, int | None] = {}
+        self.claimedScores: dict[Player, int | None] = {}
         self.roundNum = roundNum
         self.roomNum = roomNum
         self.size = size
@@ -9,6 +13,7 @@ class Table:
         for team in teams:
             for player in team:
                 self.playerScores[player] = None
+                self.claimedScores[player] = None
 
     def update(self, players, scores):
         for i in range(len(players)):
@@ -16,8 +21,9 @@ class Table:
         for team in self.teams:
             score = 0
             for player in team:
-                if self.playerScores[player] is not None:
-                    score += self.playerScores[player]
+                player_score = self.playerScores[player]
+                if player_score is not None:
+                    score += player_score
             if len(team.roundScores) < self.roundNum:
                 team.roundScores.append(score)
             else:
@@ -30,9 +36,9 @@ class Table:
         for team in self.teams:
             score = 0
             for player in team:
-                if playerScores[player] is not None:
-                    #return None
-                    score += playerScores[player]
+                player_score = self.playerScores[player]
+                if player_score is not None:
+                    score += player_score
             teamScores.append(score)
         return teamScores
                 
@@ -58,6 +64,8 @@ class Table:
             for player in team:
                 score = playerScores[player]
                 if score is None:
+                    score = self.claimedScores[player]
+                if score is None:
                     score = 0
                 if player.country is not None:
                     country = player.country
@@ -81,7 +89,6 @@ class Table:
 
     def getPlayerFromName(self, name):
         for player in self.playerScores.keys():
-            condition = (self.getTableName(player).lower() == name.lower())
             if self.getTableName(player) == name:
                 return player
         return None

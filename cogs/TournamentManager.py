@@ -97,7 +97,53 @@ class TournamentManager(commands.Cog):
             except Exception as e:
                 await ctx.send("You didn't type a valid role! Try this command again")
                 return
-        await ctx.send("`5.` Do you want to use tiebreakers for teams who tie for an advancing spot? (yes/no)")
+        
+        cc = commands.TextChannelConverter()
+        await ctx.send("`5.` Please type the channel you would like tournament round progress to be sent to (type `None` if you don't want to have a progress channel)")
+        try:
+            resp = await basic_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled creating tournament")
+            return
+        if resp.content.lower() == "none":
+            progress_channel = None
+        else:
+            try:
+                progress_channel = await cc.convert(ctx, resp.content)
+            except Exception as e:
+                await ctx.send("You didn't type a valid channel! Try this command again")
+                return
+        await ctx.send("`6.` Please type the channel you would like tournament results tables to be sent to (type `None` if you don't want to have a results channel)")
+        try:
+            resp = await basic_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled creating tournament")
+            return
+        if resp.content.lower() == "none":
+            results_channel = None
+        else:
+            try:
+                results_channel = await cc.convert(ctx, resp.content)
+            except Exception as e:
+                await ctx.send("You didn't type a valid channel! Try this command again")
+                return
+            
+        await ctx.send("`7.` Please type the channel you would like tournament room threads to be created in (type `None` if you don't want to have a rooms channel)")
+        try:
+            resp = await basic_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled creating tournament")
+            return
+        if resp.content.lower() == "none":
+            room_channel = None
+        else:
+            try:
+                room_channel = await cc.convert(ctx, resp.content)
+            except Exception as e:
+                await ctx.send("You didn't type a valid channel! Try this command again")
+                return
+            
+        await ctx.send("`8.` Do you want to use tiebreakers for teams who tie for an advancing spot? (yes/no)")
         try:
             resp = await yes_no_check(ctx)
             if resp.content.lower() == "yes":
@@ -107,13 +153,29 @@ class TournamentManager(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Cancelled creating tournament")
             return
+        
+        await ctx.send("`9.` Do you want to use the bot's reseed functionality to seed round 2 and later rooms based off of previous rounds' performance? (yes/no)")
+        try:
+            resp = await yes_no_check(ctx)
+            if resp.content.lower() == "yes":
+                reseed_rule = True
+            else:
+                reseed_rule = False
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled creating tournament")
+            return
+
         e = discord.Embed(title="Tournament Settings")
         e.add_field(name="Tournament Name", value=name, inline=False)
         e.add_field(name="Game", value=game)
         e.add_field(name="Organizer Role", value=orgRole.mention)
         if len(hostRoles) > 0:
             e.add_field(name="Host Role", value=hostRole.mention)
+        e.add_field(name="Progress Channel", value=progress_channel.mention if progress_channel else None)
+        e.add_field(name="Results Channel", value=results_channel.mention if results_channel else None)
+        e.add_field(name="Room Thread Channel", value=room_channel.mention if room_channel else None)
         e.add_field(name="1 race tiebreaker rule", value=tiebreakerRule)
+        e.add_field(name="Reseed functionality", value=reseed_rule)
         await ctx.send(embed=e, content=f"{ctx.author.mention} Are these settings correct? (yes/no)")
         
         try:
@@ -124,7 +186,8 @@ class TournamentManager(commands.Cog):
         if resp.content.lower() == "no":
             await ctx.send("Cancelled creating tournament")
             return
-        ctx.bot.tournaments[ctx.guild.id] = Tournament(size, name, game, players_per_room, [orgRole.id], hostRoles)
+        ctx.bot.tournaments[ctx.guild.id] = Tournament(size, name, game, players_per_room, [orgRole.id], hostRoles, progress_channel.id if progress_channel else None, 
+                                                       results_channel.id if results_channel else None, room_channel.id if room_channel else None, reseed_rule)
         ctx.bot.tournaments[ctx.guild.id].tiebreakRule = tiebreakerRule
         await ctx.send("Successfully created the tournament!")
 

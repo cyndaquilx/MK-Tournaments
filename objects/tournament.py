@@ -5,7 +5,8 @@ from .player import Player
 from .table import SortableTeam
 
 class Tournament:
-    def __init__(self, size: int, name: str, game: str, players_per_room: int, organizerRoles: list[int], hostRoles: list[int]):
+    def __init__(self, size: int, name: str, game: str, players_per_room: int, organizerRoles: list[int], hostRoles: list[int],
+                 progress_channel: int | None, results_channel: int | None, room_channel: int | None, reseed: bool):
         self.size = size
         self.name = name
         self.game = game
@@ -39,9 +40,9 @@ class Tournament:
         self.required_mkc = False
         
         self.can_channel = 0
-        self.progress_channel: int | None = None
-        self.results_channel: int | None = None
-        self.room_channel: int | None = None
+        self.progress_channel = progress_channel
+        self.results_channel = results_channel
+        self.room_channel = room_channel
         self.room_threads: list[list[int]] = []
         self.thread_members: set[int] = set[int]()
 
@@ -49,7 +50,7 @@ class Tournament:
         self.hostRule = True
         self.mostPtsRule = True
         self.registrationRule = True
-        self.reseed = False
+        self.reseed = reseed
         
     def currentRound(self):
         if len(self.rounds) == 0:
@@ -260,6 +261,12 @@ class Tournament:
             teams.extend([s.team for s in sortableTeams])
             placements.extend([p + len(placements) for p in roundPlacements])
         return teams, placements
+    
+    def get_room_from_thread_id(self, thread_id: int):
+        for i, round_threads in enumerate(self.room_threads):
+            for j, room_thread_id in enumerate(round_threads):
+                if thread_id == room_thread_id:
+                    return self.rounds[i].rooms[j]
 
     # def r1teams(self):
     #     teams = []

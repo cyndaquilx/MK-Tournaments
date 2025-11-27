@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 #from Tournament import Tournament
-from objects import Tournament
+from objects import Tournament, TOBot
 from algorithms import parsing
 #from parsing import parseLorenzi
 from common import (has_organizer_role, has_host_role,
@@ -9,9 +9,10 @@ from common import (has_organizer_role, has_host_role,
 import urllib
 import io
 import aiohttp
+from typing import Union
 
 class Tables(commands.Cog):
-    def __init__ (self, bot):
+    def __init__ (self, bot: TOBot):
         self.bot = bot
 
     @commands.command()
@@ -269,7 +270,30 @@ class Tables(commands.Cog):
 ##        tournament = ctx.bot.tournaments[ctx.guild.id]
 ##        if roundNum == 0:
 ##            t_round = 
-        
+
+    # listener to update claimed scores when player types their score in room channel
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if not isinstance(message.channel, Union[discord.TextChannel, discord.Thread]):
+            return
+        if message.guild is None:
+            return
+        if message.guild.id not in self.bot.tournaments:
+            return
+        tournament = self.bot.tournaments[message.guild.id]
+        if tournament.room_channel is None:
+            return
+        room = tournament.get_room_from_thread_id(message.channel.id)
+        if room is None:
+            return
+        if (not message.content.isdecimal()) or int(message.content) < 12 or int(message.content) > 180:
+            return
+        table = room.table
+        for player in table.claimedScores:
+            if player.discordObj == message.author.id:
+                table.claimedScores[player] = int(message.content)
+                return
+
 
 async def setup(bot):
     await bot.add_cog(Tables(bot))
