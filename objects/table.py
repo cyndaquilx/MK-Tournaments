@@ -36,7 +36,7 @@ class Table:
         for team in self.teams:
             score = 0
             for player in team:
-                player_score = self.playerScores[player]
+                player_score = playerScores[player]
                 if player_score is not None:
                     score += player_score
             teamScores.append(score)
