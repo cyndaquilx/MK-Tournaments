@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 #from Tournament import Tournament
-from objects import Tournament, TOBot
+from objects import Tournament, TOBot, Room, Round, Team
 from algorithms import parsing
 #from parsing import parseLorenzi
 from common import (has_organizer_role, has_host_role,
@@ -35,17 +35,28 @@ class Tables(commands.Cog):
                 return
             table = tRound.rooms[roomNum-1].table
         sb = table.scoreboard()
-        msg = f"```!submit {roomNum}\n{sb}```" + \
-        "\nPaste the above into https://hlorenzi.github.io/mk8d_ocr/table.html for the table." + \
+        send_msg = f"```!submit {roomNum}\n"
+        for line in sb.split("\n"):
+            if len(send_msg) + len(line) > 1900:
+                send_msg += "```"
+                await ctx.send(send_msg)
+                send_msg = "```"
+            send_msg += f"{line}\n"
+        send_msg += "```"
+        inst_msg = "\nPaste the above into https://hlorenzi.github.io/mk8d_ocr/table.html for the table." + \
         "\nReplace the 0s with each player's score and use the `!submit` command to submit the table." + \
         "\n0をそれぞれのプレイヤーの点数に書き換え、  `!submit` こちらのコマンドを使用して集計を提出してください。"
-        await ctx.send(msg)
+        if len(send_msg) + len(inst_msg) > 1900:
+            await ctx.send(send_msg)
+            send_msg = ""
+        send_msg += inst_msg
+        await ctx.send(send_msg)
 
-    async def tableEmbed(self, ctx, tournament, tround, room, data):
+    async def tableEmbed(self, ctx, tournament: Tournament, tround: Round, room: Room, data: str):
         names, scores = parsing.parseLorenzi(data)
         pNum = int(len(room.teams) * tournament.size)
         
-        if len(names) != pNum:
+        if len(names) < pNum:
             await ctx.send(f"Your table does not contain {pNum} valid score lines, try again!\n" + \
                            f"{pNum}人全員の点数を書き込んだ上で再度提出してください。")
             return None, None, None, None
@@ -55,12 +66,29 @@ class Tables(commands.Cog):
             return None, None, None, None
         players = room.getPlayersFromMiiNames(names)
         err_str = ""
+        # mapping teams to the number of players found for that team
+        team_dict: dict[Team, int] = {t: 0 for t in room.teams}
         for i in range(len(players)):
             if players[i] is None:
                 if len(err_str) == 0:
                     err_str += f"The following players cannot be found in Room {room.roomNum}:\n"
                     err_str += f"以下のプレイヤーはRoom {room.roomNum}に存在しません。:\n"
                 err_str += f"{names[i]}\n"
+            # find which team that player was in and add 1 to their count
+            for team in team_dict.keys():
+                if players[i] in team.players:
+                    team_dict[team] += 1
+                    break
+        # check which teams are missing players
+        if tournament.size > 1:
+            team_err_str = ""
+            for team, count in team_dict.items():
+                if count < tournament.size:
+                    if len(team_err_str) == 0:
+                        team_err_str += f"\nThe following teams have less than {tournament.size} players in this submission:\n"
+                    team_err_str += f"{team.tag}\n"
+            if len(team_err_str):
+                err_str += team_err_str
         if len(err_str) > 0:
             await ctx.send(err_str)
             return None, None, None, None

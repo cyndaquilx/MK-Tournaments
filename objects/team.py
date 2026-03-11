@@ -112,6 +112,13 @@ class Team:
             mmr_sum += player.mmr
         return mmr_sum/len(self.players)
     
+    def top6_mmr(self):
+        sorted_players = sorted(self.players, key=lambda p: p.mmr, reverse=True)
+        mmr_sum = 0
+        for player in sorted_players[:6]:
+            mmr_sum += player.mmr
+        return mmr_sum/len(sorted_players[:6])
+    
     def top_mmr(self):
         max = 0
         for player in self.players:

@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import aiohttp, asyncio
 from common import has_organizer_role, yes_no_check, number_check
-from objects import Tournament
+from objects import Tournament, Player
 
 class lounge(commands.Cog):
     def __init__ (self, bot):
@@ -14,7 +14,7 @@ class lounge(commands.Cog):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return False
-        tournament = ctx.bot.tournaments[ctx.guild.id]
+        tournament: Tournament = ctx.bot.tournaments[ctx.guild.id]
         if await has_organizer_role(ctx, tournament) is False:
             return
         await ctx.send(f"Do you want to get MMR for teams in Season {season}? (yes/no)")
@@ -26,17 +26,17 @@ class lounge(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Cancelled getting MMR")
             return
-        base_url = "https://www.mk8dx-lounge.com" + '/api/player?'
+        base_url = "https://lounge.mkcentral.com" + '/api/player?game=mkworld24p&'
         if season is not None:
             base_url += f"season={int(season)}&"
         headers = {'Content-type': 'application/json'}
         progress = await ctx.send("Working...")
         async with aiohttp.ClientSession() as session:
-            not_found = []
+            not_found: list[Player] = []
             for i, team in enumerate(tournament.teams):
                 for player in team.players:
                     await asyncio.sleep(0.05)
-                    request_text = f"discordId={player.discordTag}"
+                    request_text = f"mkcId={player.mkcID}"
                     request_url = base_url + request_text
                     async with session.get(request_url,headers=headers) as resp:
                         if resp.status != 200:
@@ -44,15 +44,10 @@ class lounge(commands.Cog):
                             not_found.append(player)
                             continue
                         player_data = await resp.json()
-                        if 'maxMmr' not in player_data.keys():
-                            #player.mmr = 0
-                            if 'mmr' in player_data.keys():
-                                player.mmr = player_data['mmr']
-                            else:
-                                player.mmr = 0
-                            #not_found.append(player)
-                            continue
-                        player.mmr = player_data['maxMmr']
+                        if 'mmr' in player_data.keys():
+                            player.mmr = player_data['mmr']
+                        else:
+                            player.mmr = 4600
                 if i > 0 and i % 10 == 0:
                     await progress.edit(content=f"Working... ({i}/{len(tournament.teams)})")
         not_found_msg = "\n".join([f"{str(player)} - {player.miiName}" for player in not_found])
@@ -110,12 +105,43 @@ class lounge(commands.Cog):
             msg += f"{i}. "
             if team.tag is not None:
                 msg += f"{team.tag} | "
-            msg += f"{', '.join(str(player) for player in team)} ({team.avg_mmr()})\n"
+            msg += f"{', '.join(str(player) for player in team)} ({team.top6_mmr()})\n"
             i += 1
             if len(msg) > 1500:
                 msg += "```"
                 await ctx.send(msg)
                 msg = "```"
+        if len(msg) > 3:
+            msg += "```"
+            await ctx.send(msg)
+
+    @commands.command()
+    @commands.max_concurrency(1, commands.BucketType.guild)
+    async def seedmmr(self, ctx):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return False
+        tournament: Tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if tournament.started is False:
+            await ctx.send("The tournament must be started to use this command; use `!start`")
+            return False
+        if tournament.currentRoundNumber() > 0:
+            await ctx.send("The tournament has rooms for R1 made already, so this command cannot be used.")
+            return
+        mmr_sorted_teams = sorted(tournament.teams, key=lambda t: t.top6_mmr(), reverse=True)
+        for i, t in enumerate(mmr_sorted_teams):
+            t.seed = i+1
+        seed_sorted_teams = sorted(tournament.teams, key=lambda t: t.seed if t.seed is not None else 0)
+        msg = "Successfully seeded teams\n```"
+        for t in seed_sorted_teams:
+            line = f"{t.seed}. {t.tag} ({t.top6_mmr():.2f} MMR)\n"
+            if len(msg) + len(line) > 1900:
+                msg += "```"
+                await ctx.send(msg)
+                msg = "```"
+            msg += line
         if len(msg) > 3:
             msg += "```"
             await ctx.send(msg)

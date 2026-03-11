@@ -36,6 +36,8 @@ class Table:
         for team in self.teams:
             score = 0
             for player in team:
+                if player not in playerScores:
+                    continue
                 player_score = playerScores[player]
                 if player_score is not None:
                     score += player_score
@@ -62,6 +64,8 @@ class Table:
                     tag = letter
                 sb += f"\n{tag} - {letter}\n"
             for player in team:
+                if player not in playerScores:
+                    continue
                 score = playerScores[player]
                 if score is None:
                     score = self.claimedScores[player]
@@ -87,7 +91,7 @@ class Table:
                 return name
         return None
 
-    def getPlayerFromName(self, name):
+    def getPlayerFromName(self, name: str) -> Player | None:
         for player in self.playerScores.keys():
             if self.getTableName(player) == name:
                 return player
@@ -183,8 +187,12 @@ class SortableTeam:
         sum1 = 0
         sum2 = 0
         for player in self.team:
+            if self.playerScores[player] is None:
+                continue
             sum1 += self.playerScores[player]
         for player in other.team:
+            if other.playerScores[player] is None:
+                continue
             sum2 += other.playerScores[player]
         if sum1 < sum2:
             return True
@@ -208,9 +216,13 @@ class SortableTeam:
             max1 = 0
             max2 = 0
             for player in self.team:
+                if self.playerScores[player] is None:
+                    continue
                 if self.playerScores[player] > max1:
                     max1 = self.playerScores[player]
             for player in other.team:
+                if other.playerScores[player] is None:
+                    continue
                 if other.playerScores[player] > max2:
                     max2 = other.playerScores[player]
             if max1 < max2:

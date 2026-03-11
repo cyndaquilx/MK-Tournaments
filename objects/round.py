@@ -34,12 +34,18 @@ class Round:
         for t in extra[0:extraTeams]:
             tscore = 0
             for player in t.team:
+                if t.playerScores[player] is None:
+                    continue
                 tscore += t.playerScores[player]
             scores.append(tscore)
         adv.extend([t.team for t in extra[0:extraTeams]])
         return adv, scores
 
     def reseed(self, tournament):
+        if self.roundNum <= 1:
+            for team in self.teams:
+                team.currSeed = team.seed
+            return
         for team in self.teams:
             team.currSeed = 0 # makes floated teams highest seeds, since 0 is higher than all sortableteams seeds
         lastRound = tournament.lastRound()

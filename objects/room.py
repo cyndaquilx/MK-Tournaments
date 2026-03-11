@@ -40,8 +40,8 @@ class Room:
         sb = self.table.scoreboard(playerScores)
         return sb
     
-    def getPlayersFromMiiNames(self, names):
-        players = []
+    def getPlayersFromMiiNames(self, names: list[str]):
+        players: list[Player | None] = []
         for name in names:
             players.append(self.table.getPlayerFromName(name))
         return players

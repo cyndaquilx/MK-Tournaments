@@ -21,7 +21,7 @@ class TournamentManager(commands.Cog):
     @commands.guild_only()
     async def tournament(self, ctx: commands.Context[TOBot], size:int):
         assert ctx.guild is not None
-        valid_sizes = [1, 2, 3, 4]
+        valid_sizes = [1, 2, 3, 4, 6]
         if size not in valid_sizes:
             await ctx.send(f"Invalid size: Valid sizes are: {', '.join([str(i) for i in valid_sizes])}")
             return
@@ -45,6 +45,7 @@ class TournamentManager(commands.Cog):
         if size > 2 and game in ["MK7", "MKT"]:
             await ctx.send("Only FFA and 2v2 are supported for MK7/MKTour tournaments, try again")
             return
+        
         players_per_room = 12
         if game in ["MK7", "MKT"]:
             players_per_room = 8
@@ -59,6 +60,9 @@ class TournamentManager(commands.Cog):
             if players_per_room not in [12, 24]:
                 await ctx.send("Error: Only room sizes of 12 or 24 are allowed for MKWorld, try again")
                 return
+        if size == 6 and (game != "MKWorld" or players_per_room != 24):
+            await ctx.send("6v6 is only allowed as a format in 24p MKWorld tournaments, try again")
+            return
         await ctx.send("`2.` What is the name of your tournament?")
         try:
             resp = await basic_check(ctx)
@@ -1009,6 +1013,8 @@ class TournamentManager(commands.Cog):
                 msg += "--------\n"
             tscore = 0
             for player in team.team:
+                if team.playerScores[player] is None:
+                    continue
                 tscore += team.playerScores[player]
             if team.rank <= adv.adv:
                 rank = f" ({common.getNthPlace(team.rank)})"
@@ -1046,7 +1052,7 @@ class TournamentManager(commands.Cog):
         msg = f"```Round {currRound.roundNum} team ranking\n"
         msg += f"TID  | Rank | Score | Players \n"
         for t in adv_sortable:
-            t_score = sum([t.playerScores[p] for p in t.team])
+            t_score = sum([t.playerScores[p] for p in t.team if t.playerScores[p] is not None])
             msg += f"{tournament.teams.index(t.team)+1:<4} | {t.rank:<4} | {t_score:<5} | {t.team.tableName()}\n"
             if len(msg) > 1500:
                 msg += "```"
@@ -1054,7 +1060,7 @@ class TournamentManager(commands.Cog):
                 msg = "```"
         msg += "--------\n"
         for t in elim_sortable:
-            t_score = sum([t.playerScores[p] for p in t.team])
+            t_score = sum([t.playerScores[p] for p in t.team if t.playerScores[p] is not None])
             msg += f"{tournament.teams.index(t.team)+1:<4} | {t.rank:<4} | {t_score:<5} | {t.team.tableName()}\n"
             if len(msg) > 1500:
                 msg += "```"
