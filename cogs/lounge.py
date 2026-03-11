@@ -44,7 +44,9 @@ class lounge(commands.Cog):
                             not_found.append(player)
                             continue
                         player_data = await resp.json()
-                        if 'mmr' in player_data.keys():
+                        if 'maxMmr' in player_data.keys():
+                            player.mmr = player_data['maxMmr']
+                        elif 'mmr' in player_data.keys():
                             player.mmr = player_data['mmr']
                         else:
                             player.mmr = 4600
