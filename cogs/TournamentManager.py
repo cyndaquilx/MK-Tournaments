@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands, tasks
-from objects import Tournament, TOBot
+from objects import Tournament, TOBot, Team
 from common import (has_organizer_role, basic_check, yes_no_check,
                     number_check, num_exit_check, optionCheck, getNthPlace)
 import common
@@ -9,11 +9,13 @@ import aiohttp
 import asyncio
 import math
 import random
+import re
 
 class TournamentManager(commands.Cog):
-    def __init__ (self, bot):
+    def __init__ (self, bot: TOBot):
         self.bot = bot
         self._progress_task = self.update_progress_channels.start()
+        self._list_task = self.update_list_channels.start()
 
     @commands.command()
     @commands.max_concurrency(1, commands.BucketType.guild)
@@ -859,6 +861,24 @@ class TournamentManager(commands.Cog):
         else:
             await ctx.send("Teams will no longer be reseeded in rooms after each round")
 
+    @commands.command(name="tableUsernames")
+    async def toggle_table_usernames(self, ctx):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if hasattr(tournament, 'table_usernames'):
+            tournament.table_usernames = not tournament.table_usernames
+        else:
+            tournament.table_usernames = True
+
+        if tournament.table_usernames:
+            await ctx.send("This tournament will now display player usernames on table/scoreboard instead of mii names")
+        else:
+            await ctx.send("This tournament will now display mii names on table/scoreboard instead of player usernames")
+
     @commands.command()
     async def roundProgress(self, ctx):
         if ctx.guild.id not in ctx.bot.tournaments:
@@ -1097,6 +1117,20 @@ class TournamentManager(commands.Cog):
         await ctx.send(f"Successfully set results channel to {channel.mention}")
 
     @commands.command()
+    @commands.guild_only()
+    async def listChannel(self, ctx: commands.Context[TOBot], channel: discord.TextChannel):
+        assert ctx.guild is not None
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        tournament.list_channel = channel.id
+        tournament.list_msgs = []
+        await ctx.send(f"Successfully set registration list channel to {channel.mention}")
+
+    @commands.command()
     @commands.max_concurrency(1, commands.BucketType.guild)
     async def tiebreak(self, ctx, roomNum:int):
         if ctx.guild.id not in ctx.bot.tournaments:
@@ -1152,12 +1186,12 @@ class TournamentManager(commands.Cog):
         await ctx.send(msg)
 
     @commands.command()
-    async def lookup(self, ctx, *, query):
-        if ctx.guild.id not in ctx.bot.tournaments:
+    async def lookup(self, ctx: commands.Context[TOBot], *, query):
+        if not ctx.guild or ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
-        results = []
+        results: list[Team] = []
         query = query.lower().strip()
         if parsing.checkFC(query):
             for team in tournament.teams:
@@ -1173,7 +1207,17 @@ class TournamentManager(commands.Cog):
                 if team.mkcID == int(query):
                     results.append(team)
                 for player in team:
+                    if player.discordObj == int(query):
+                        results.append(team)
+                for player in team:
                     if player.mkcID == int(query):
+                        results.append(team)
+        discord_mention_match = re.match(r"<@!?(\d+)>", query)
+        if discord_mention_match:
+            discord_id = int(discord_mention_match.group(1))
+            for team in tournament.teams:
+                for player in team:
+                    if player.discordObj == discord_id:
                         results.append(team)
         for team in tournament.teams:
             if team.tag is not None and team.tag.lower() == query:
@@ -1190,62 +1234,133 @@ class TournamentManager(commands.Cog):
             e.add_field(name=f"ID {teamid}", value=team.teamDetails(), inline=False)
         if len(e.fields) > 0:
             await ctx.send(embed=e)
+        else:
+            await ctx.send("Could not find any teams matching this query.")
             
-        
-
     @tasks.loop(seconds=30)
     async def update_progress_channels(self):
-        for tournament in self.bot.tournaments.values():
-            if tournament.progress_channel is None:
-                continue
-            channel = self.bot.get_channel(tournament.progress_channel)
-            if channel is None:
-                continue
-            currRound = tournament.currentRound()
-            if currRound is None:
-                continue
-            if currRound.numRooms() == 0:
-                continue
-            msgs = []
-            currMsg = ""
-            roundNum = tournament.currentRoundNumber()
-            currMsg += f"**ROUND {roundNum} PROGRESS**\n"
-            finishCount = 0
-            for room in currRound.rooms:
-                finished, status = room.getProgressStr()
-                if finished is True:
-                    finishCount += 1
-                currMsg += status
-                if len(currMsg) > 1500:
-                    msgs.append(currMsg)
-                    currMsg = ""
-            currMsg += f"`{finishCount}/{len(currRound.rooms)} finished`"
-            msgs.append(currMsg)
-            discordMsgs = []
-            invalidMsgs = []
-            for msgid in currRound.progress_msgs:
-                try:
-                    msg = await channel.fetch_message(msgid)
-                    discordMsgs.append(msg)
-                except Exception as e:
-                    invalidMsgs.append(msgid)
+        # we need a big try block at the top here so that the task never fails
+        # (if theres ever an error in here it will stop the task until restart)
+        try:
+            for tournament in self.bot.tournaments.values():
+                if tournament.progress_channel is None:
                     continue
-            for msgid in invalidMsgs:
-                currRound.progress_msgs.remove(msgid)
-            try:
-                for i, msg in enumerate(discordMsgs):
-                    if len(msgs) > 0:
-                        messageText = msgs.pop(0)
-                        if msg.content == messageText:
+                channel = self.bot.get_channel(tournament.progress_channel)
+                if channel is None or not isinstance(channel, (discord.TextChannel, discord.Thread)):
+                    continue
+                currRound = tournament.currentRound()
+                if currRound is None:
+                    continue
+                if currRound.numRooms() == 0:
+                    continue
+                if tournament.finished:
+                    continue
+                msgs = []
+                currMsg = ""
+                roundNum = tournament.currentRoundNumber()
+                currMsg += f"**ROUND {roundNum} PROGRESS**\n"
+                finishCount = 0
+                for room in currRound.rooms:
+                    finished, status = room.getProgressStr()
+                    if finished is True:
+                        finishCount += 1
+                    currMsg += status
+                    if len(currMsg) > 1500:
+                        msgs.append(currMsg)
+                        currMsg = ""
+                currMsg += f"`{finishCount}/{len(currRound.rooms)} finished`"
+                msgs.append(currMsg)
+                discordMsgs: list[discord.PartialMessage | discord.Message] = []
+                invalidMsgs = []
+                for msgid in currRound.progress_msgs:
+                    msg = channel.get_partial_message(msgid)
+                    if not msg:
+                        try:
+                            msg = await channel.fetch_message(msgid)
+                            discordMsgs.append(msg)
+                        except Exception as e:
+                            invalidMsgs.append(msgid)
                             continue
-                        await msg.edit(content=messageText)
                     else:
-                        await msg.delete()
-                for messageText in msgs:
-                    message = await channel.send(messageText)
-                    currRound.progress_msgs.append(message.id)
-            except Exception as e:
-                pass
+                        discordMsgs.append(msg)
+                for msgid in invalidMsgs:
+                    currRound.progress_msgs.remove(msgid)
+                try:
+                    for i, msg in enumerate(discordMsgs):
+                        if len(msgs) > 0:
+                            messageText = msgs.pop(0)
+                            if isinstance(msg, discord.Message) and msg.content == messageText:
+                                continue
+                            await msg.edit(content=messageText)
+                        else:
+                            await msg.delete()
+                    for messageText in msgs:
+                        message = await channel.send(messageText)
+                        currRound.progress_msgs.append(message.id)
+                except Exception as e:
+                    pass
+        except:
+            pass
+
+    @tasks.loop(minutes=1)
+    async def update_list_channels(self):
+        try:
+            for tournament in self.bot.tournaments.values():
+                # should only update these msgs while the tournament hasnt started, cant add or remove
+                # new players when its been officially started
+                if tournament.started:
+                    continue
+                if not hasattr(tournament, 'list_channel') or tournament.list_channel is None:
+                    continue
+                channel = self.bot.get_channel(tournament.list_channel)
+                if channel is None or not isinstance(channel, (discord.TextChannel, discord.Thread)):
+                    continue
+                discordMsgs: list[discord.PartialMessage | discord.Message] = []
+                invalidMsgs = []
+                for msgid in tournament.list_msgs:
+                    msg = channel.get_partial_message(msgid)
+                    if not msg:
+                        try:
+                            msg = await channel.fetch_message(msgid)
+                            discordMsgs.append(msg)
+                        except Exception as e:
+                            invalidMsgs.append(msgid)
+                            continue
+                    else:
+                        discordMsgs.append(msg)
+                for msgid in invalidMsgs:
+                    tournament.list_msgs.remove(msgid)
+                msg_strs = []
+                msg = f"Registered Teams [{len(tournament.teams)}]\n```"
+                for i, team in enumerate(tournament.teams):
+                    msg += f"{i+1}. "
+                    if team.tag is not None:
+                        msg += f"{team.tag} | "
+                    msg += f"{', '.join(str(player) for player in team)}\n"
+                    i += 1
+                    if len(msg) > 1500:
+                        msg += "```"
+                        msg_strs.append(msg)
+                        msg = "```"
+                if len(msg) > 3:
+                    msg += "```"
+                    msg_strs.append(msg)
+                try:
+                    for i, msg in enumerate(discordMsgs):
+                        if len(msg_strs) > 0:
+                            messageText = msg_strs.pop(0)
+                            if isinstance(msg, discord.Message) and msg.content == messageText:
+                                continue
+                            await msg.edit(content=messageText)
+                        else:
+                            await msg.delete()
+                    for messageText in msg_strs:
+                        message = await channel.send(messageText)
+                        tournament.list_msgs.append(message.id)
+                except Exception as e:
+                    pass
+        except Exception as e:
+            pass
         
     @commands.command()
     async def getHosts(self, ctx):

@@ -38,13 +38,16 @@ class Tournament:
         else:
             self.required_host = True
         self.required_mkc = False
+        self.table_usernames = False
         
         self.can_channel = 0
         self.progress_channel = progress_channel
         self.results_channel = results_channel
         self.room_channel = room_channel
+        self.list_channel: int | None = None
         self.room_threads: list[list[int]] = []
         self.thread_members: set[int] = set[int]()
+        self.list_msgs: list[int] = []
 
         self.tiebreakRule = False
         self.hostRule = True

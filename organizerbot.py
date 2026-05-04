@@ -34,14 +34,17 @@ else:
 
 @tasks.loop(minutes=1)
 async def backup_tournament_data():
-    if len(bot.tournaments) == 0:
-        return
-    # write to a temporary file first in case bot is taken offline while writing
-    temp_file_name = 'tournament_data_temp.pkl'
-    async with aiofiles.open(temp_file_name, 'wb') as backupFile:
-        await backupFile.write(pickle.dumps(bot.tournaments, pickle.HIGHEST_PROTOCOL))
-    permanent_file_name = 'tournament_data.pkl'
-    await aiofiles.os.replace(temp_file_name, permanent_file_name)
+    try:
+        if len(bot.tournaments) == 0:
+            return
+        # write to a temporary file first in case bot is taken offline while writing
+        temp_file_name = 'tournament_data_temp.pkl'
+        async with aiofiles.open(temp_file_name, 'wb') as backupFile:
+            await backupFile.write(pickle.dumps(bot.tournaments, pickle.HIGHEST_PROTOCOL))
+        permanent_file_name = 'tournament_data.pkl'
+        await aiofiles.os.replace(temp_file_name, permanent_file_name)
+    except:
+        pass
     
 @bot.event
 async def on_command_error(ctx: commands.Context[TOBot], error):

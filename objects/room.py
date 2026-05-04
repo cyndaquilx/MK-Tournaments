@@ -33,17 +33,17 @@ class Room:
         adv, tie, extra = self.table.getAdvanced(tournament, playerScores)
         return adv, tie, extra
 
-    def sampleScoreboard(self, players, scores):
+    def sampleScoreboard(self, players, scores, usernames=False):
         playerScores = {}
         for i in range(len(players)):
             playerScores[players[i]] = scores[i]
-        sb = self.table.scoreboard(playerScores)
+        sb = self.table.scoreboard(playerScores, usernames=usernames)
         return sb
     
-    def getPlayersFromMiiNames(self, names: list[str]):
+    def getPlayersFromMiiNames(self, names: list[str], usernames=False):
         players: list[Player | None] = []
         for name in names:
-            players.append(self.table.getPlayerFromName(name))
+            players.append(self.table.getPlayerFromName(name, usernames))
         return players
 
     def getProgressStr(self):

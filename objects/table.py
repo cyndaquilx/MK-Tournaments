@@ -45,7 +45,7 @@ class Table:
         return teamScores
                 
 
-    def scoreboard(self, playerScores=None):
+    def scoreboard(self, playerScores=None, usernames=False):
         if playerScores is None:
             playerScores = self.playerScores
         sb = f"#title ROUND {self.roundNum} ROOM {self.roomNum}.\n"
@@ -75,25 +75,25 @@ class Table:
                     country = player.country
                 else:
                     country = ""
-                sb += f"{self.getTableName(player)} [{country}] {score}\n"
+                sb += f"{self.getTableName(player, usernames)} [{country}] {score}\n"
             i += 1
         return sb
 
 
-    def getTableName(self, player):
+    def getTableName(self, player, usernames=False):
         players = list(self.playerScores.keys())
         for index, playerObj in enumerate(players):
             if player == playerObj:
-                duplicates = [p for p in players[0:index] if p.tableName() == playerObj.tableName()]
-                name = playerObj.tableName()
+                duplicates = [p for p in players[0:index] if p.tableName(usernames) == playerObj.tableName(usernames)]
+                name = playerObj.tableName(usernames)
                 if len(duplicates) > 0:
                     name += f" ({len(duplicates)+1})"
                 return name
         return None
 
-    def getPlayerFromName(self, name: str) -> Player | None:
+    def getPlayerFromName(self, name: str, usernames=False) -> Player | None:
         for player in self.playerScores.keys():
-            if self.getTableName(player) == name:
+            if self.getTableName(player, usernames) == name:
                 return player
         return None
 

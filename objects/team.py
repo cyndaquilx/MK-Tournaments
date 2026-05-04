@@ -103,6 +103,8 @@ class Team:
                 player_details += "\t`can host`\n"
             if player.mkcID is not None:
                 player_details += f"\t`MKC ID:` {player.mkcID}\n"
+            if player.discordObj:
+                player_details += f"\t`Discord:` <@{player.discordObj}>\n"
             details += f"{player_details}\n"
         return details
     

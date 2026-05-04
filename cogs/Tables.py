@@ -16,8 +16,9 @@ class Tables(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def scoreboard(self, ctx, roomNum:int, roundNum=0):
-        if ctx.guild.id not in ctx.bot.tournaments:
+    @commands.guild_only()
+    async def scoreboard(self, ctx: commands.Context[TOBot], roomNum:int, roundNum=0):
+        if not ctx.guild or ctx.guild.id not in ctx.bot.tournaments:
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if roundNum == 0:
@@ -34,7 +35,7 @@ class Tables(commands.Cog):
                 await ctx.send("Invalid room number\nルームナンバーが正しくありません。")
                 return
             table = tRound.rooms[roomNum-1].table
-        sb = table.scoreboard()
+        sb = table.scoreboard(usernames=tournament.table_usernames)
         send_msg = f"```!submit {roomNum}\n"
         for line in sb.split("\n"):
             if len(send_msg) + len(line) > 1900:
@@ -64,7 +65,7 @@ class Tables(commands.Cog):
             await ctx.send("Duplicate names are not allowed! Try again\n" + \
                            "同一プレイヤーが重複して書き込まれています。訂正の上再度提出してください。")
             return None, None, None, None
-        players = room.getPlayersFromMiiNames(names)
+        players = room.getPlayersFromMiiNames(names, usernames=tournament.table_usernames)
         err_str = ""
         # mapping teams to the number of players found for that team
         team_dict: dict[Team, int] = {t: 0 for t in room.teams}
@@ -92,7 +93,7 @@ class Tables(commands.Cog):
         if len(err_str) > 0:
             await ctx.send(err_str)
             return None, None, None, None
-        sb = room.sampleScoreboard(players, scores)
+        sb = room.sampleScoreboard(players, scores, usernames=tournament.table_usernames)
         
         base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
         url_table_text = urllib.parse.quote(sb)
@@ -258,8 +259,8 @@ class Tables(commands.Cog):
         
 
     #@commands.command()
-    async def sendResults(self, ctx, room:int, embed, roundNum=0):
-        if ctx.guild.id not in ctx.bot.tournaments:
+    async def sendResults(self, ctx: commands.Context[TOBot], room:int, embed, roundNum=0):
+        if not ctx.guild or ctx.guild.id not in ctx.bot.tournaments:
             return
         tournament = ctx.bot.tournaments[ctx.guild.id]
         if roundNum == 0:
@@ -270,10 +271,10 @@ class Tables(commands.Cog):
         if tournament.results_channel is None:
             return
         channel = ctx.guild.get_channel(tournament.results_channel)
-        if channel is None:
+        if channel is None or not isinstance(channel, discord.TextChannel):
             return
         table = currRound.rooms[room-1].table
-        sb = table.scoreboard()
+        sb = table.scoreboard(usernames=tournament.table_usernames)
         base_url_lorenzi = "https://gb.hlorenzi.com/table.png?data="
         url_table_text = urllib.parse.quote(sb)
         image_url = base_url_lorenzi + url_table_text

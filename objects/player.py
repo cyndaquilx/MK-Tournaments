@@ -28,9 +28,9 @@ class Player:
     def toggleHost(self):
         self.canHost = not self.canHost
 
-    def tableName(self):
+    def tableName(self, usernames=False):
         name = ''
-        if self.miiName is not None and self.miiName != "":
+        if not usernames and self.miiName is not None and self.miiName != "":
             name = self.miiName
         #if self.username is not None:
         elif self.username:
