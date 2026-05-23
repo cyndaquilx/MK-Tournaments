@@ -102,6 +102,44 @@ class TeamManagement(commands.Cog):
         player.canHost = not (player.canHost)
         await ctx.send(f"Set player {str(player)} host field to {player.canHost}")
 
+    @commands.command(aliases=['editUsername'])
+    async def editName(self, ctx, teamid:int):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return
+        tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if teamid < 1:
+            await ctx.send("Please enter a number greater than 0")
+            return
+        if teamid > len(tournament.teams):
+            await ctx.send(f"Please enter a number inside the range of the number of teams registered {len(tournament.teams)}")
+            return
+        team = tournament.teams[teamid-1]
+        playersMsg = "Which player do you want to change?\n"
+        for i, player in enumerate(team.players):
+            playersMsg += f"`{i+1})` {str(player)} - {player.username}\n"
+        await ctx.send(playersMsg)
+        try:
+            resp = await number_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled name change")
+            return
+        choice = int(resp.content)
+        if choice < 1 or choice > len(team.players):
+            await ctx.send("Invalid player ID; try using this command again")
+            return
+        player = team.players[choice-1]
+        await ctx.send("What would you like to change the name to?")
+        try:
+            resp = await basic_check(ctx)
+        except asyncio.TimeoutError:
+            await ctx.send("Timed out: Cancelled name change")
+            return
+        player.username = resp.content
+        await ctx.send(f"Successfully changed {str(player)}'s name to {resp.content}")
+
     @commands.command(aliases=['editMii'])
     async def editMiiName(self, ctx, teamid:int):
         if ctx.guild.id not in ctx.bot.tournaments:
