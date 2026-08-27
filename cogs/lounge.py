@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 import aiohttp, asyncio
 from common import has_organizer_role, yes_no_check, number_check
-from objects import Tournament, Player
+from objects import Tournament, Player, Team
+from typing import Literal
 
 class lounge(commands.Cog):
     def __init__ (self, bot):
@@ -10,7 +11,7 @@ class lounge(commands.Cog):
 
     @commands.command()
     @commands.max_concurrency(1, commands.BucketType.guild)
-    async def getmmr(self, ctx, season=None):
+    async def getmmr(self, ctx, mode:Literal["12p", "24p"], season=None):
         if ctx.guild.id not in ctx.bot.tournaments:
             await ctx.send("no tournament started yet")
             return False
@@ -26,7 +27,7 @@ class lounge(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.send("Timed out: Cancelled getting MMR")
             return
-        base_url = "https://lounge.mkcentral.com" + '/api/player?game=mkworld24p&'
+        base_url = "https://lounge.mkcentral.com" + f'/api/player?game=mkworld{mode}&'
         if season is not None:
             base_url += f"season={int(season)}&"
         headers = {'Content-type': 'application/json'}
@@ -178,12 +179,27 @@ class lounge(commands.Cog):
         if len(tournament.floated_teams) < round:
             for i in range(len(tournament.floated_teams), round):
                 tournament.floated_teams.append([])
-        floated_teams = []
-        tournament.floated_teams[round-1] = floated_teams
-        teams = tournament.get_unfloated_teams()
-        for team in teams:
+        floated_teams: list[Team] = []
+        # teams = tournament.get_unfloated_teams()
+        for team in tournament.teams:
             if team.avg_mmr() >= mmr:
                 floated_teams.append(team)
+        # if a team is already seeded in a higher round, don't seed them
+        # in the lower round.
+        # if they're already seeded in a lower round,
+        # remove them from the seeded teams of that lower round.
+        for i, r in enumerate(tournament.floated_teams):
+            if i == round-1:
+                continue
+            elif i > round-1:
+                for team in r:
+                    if team in floated_teams:
+                        floated_teams.remove(team)
+            else:
+                for j in range(len(r)-1, -1, -1):
+                    if r[j] in floated_teams:
+                        r.pop(j)
+        tournament.floated_teams[round-1] = floated_teams      
         await ctx.send("Done")
 
     @commands.command()
@@ -195,11 +211,13 @@ class lounge(commands.Cog):
         if await has_organizer_role(ctx, tournament) is False:
             return
         msg = "```"
+        teams_floated = False
         for i, round in enumerate(tournament.floated_teams):
             if len(round) == 0:
                 continue
             msg += f"***Round {i+1}**\n"
             for team in round:
+                teams_floated = True
                 if team.tag is not None:
                     msg += f"{team.tag} | "
                 msg += f"{', '.join(str(player) for player in team)} ({team.avg_mmr()})\n"
@@ -210,7 +228,26 @@ class lounge(commands.Cog):
         if len(msg) > 3:
             msg += "```"
             await ctx.send(msg)
+        if not teams_floated:
+            await ctx.send("No teams floated to any rounds past R1 so far")
 
+    @commands.command()
+    async def floatreset(self, ctx):
+        if ctx.guild.id not in ctx.bot.tournaments:
+            await ctx.send("no tournament started yet")
+            return False
+        tournament: Tournament = ctx.bot.tournaments[ctx.guild.id]
+        if await has_organizer_role(ctx, tournament) is False:
+            return
+        if tournament.started is False:
+            await ctx.send("The tournament must be started to use this command; use `!start`")
+            return False
+        if tournament.currentRoundNumber() > 0:
+            await ctx.send("The tournament has rooms for R1 made already, so this command cannot be used.")
+            return
+        for i in range(len(tournament.floated_teams)):
+            tournament.floated_teams[i] = []
+        await ctx.send("Reset floated teams successfully")
 
 async def setup(bot):
     await bot.add_cog(lounge(bot))
